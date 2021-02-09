@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Documentation: http://broadinstitute.github.io/picard/command-line-overview.html#CollectWgsMetrics
+#
+# Collect metrics about coverage and performance of whole genome sequencing (WGS) experiments.
+# This tool collects metrics about the fractions of reads that pass base- and mapping-quality filters
+# as well as coverage (read-depth) levels for WGS analyses. Both minimum base- and mapping-quality
+# values as well as the maximum read depths (coverage cap) are user defined.
+#
+# Note: Metrics labeled as percentages are actually expressed as fractions!
+
+
+!{params.java} \
+-Xms!{task.memory.toMega()}m -Xmx!{task.memory.toMega()}m \
+-jar !{params.picard} CollectWgsMetrics \
+INPUT=!{inBam} \
+OUTPUT="!{metrics}" \
+REFERENCE_SEQUENCE="!{params.referenceFasta}" \
+MINIMUM_MAPPING_QUALITY=20 \
+MINIMUM_BASE_QUALITY=20 \
+COVERAGE_CAP=250 \
+LOCUS_ACCUMULATION_CAP=100000 \
+COUNT_UNPAIRED=!{countUnpairedReads} \
+VALIDATION_STRINGENCY=LENIENT \
+TMP_DIR=!{workDir}
