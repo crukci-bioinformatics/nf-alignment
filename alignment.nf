@@ -2,36 +2,17 @@
 
 nextflow.enable.dsl = 2
 
-if (!params.aligner)
+include { checkParameters; fetchContainer } from "./components/functions"
+
+if (!checkParameters(params))
 {
-    exit 1, "Aligner not specified. Use --aligner with one of 'bwa', 'bwamem', 'star'."
+    exit 1
 }
 
-if (!params.endType)
-{
-    exit 1, "Sequencing method not set. Use --endType with 'se' (single read) or 'pe' (paired end)."
-}
-
-def pairedEnd
-
-switch (params.endType.toLowerCase()[0])
-{
-    case 's':
-        pairedEnd = false
-        break
-
-    case 'p':
-        pairedEnd = true
-        break
-
-    default:
-        exit 1, "End type must be given to indicate single read (se/sr) or paired end (pe)."
-}
-
-switch (params.aligner.toLowerCase())
+switch (params.aligner)
 {
     case 'bwa':
-        if (pairedEnd)
+        if (params.pairedEnd)
         {
             include { bwa_pe as alignment } from "./pipelines/bwa_pe"
         }
@@ -43,7 +24,7 @@ switch (params.aligner.toLowerCase())
 
     case 'bwamem':
     case 'bwa_mem':
-        if (pairedEnd)
+        if (params.pairedEnd)
         {
             include { bwamem_pe as alignment } from "./pipelines/bwamem_pe"
         }
@@ -54,7 +35,7 @@ switch (params.aligner.toLowerCase())
         break
 
     case 'star':
-        if (pairedEnd)
+        if (params.pairedEnd)
         {
             include { star_pe as alignment } from "./pipelines/star_pe"
         }
@@ -67,8 +48,6 @@ switch (params.aligner.toLowerCase())
     default:
         exit 1, "Aligner must be one of 'bwa', 'bwamem' or 'star'."
 }
-
-include { fetchContainer } from "./components/functions"
 
 workflow
 {
