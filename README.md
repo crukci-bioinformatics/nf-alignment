@@ -28,7 +28,7 @@ installing Nextflow can be [found on the Nextflow web site](https://www.nextflow
 The rest of this document assumes the downloaded `nextflow` script is on the path.
 
 Within CRUK-CI we have tools for helping with assembling FASTQ files. The
-[kick start application](http://internal-bioinformatics.cruk.cam.ac.uk/docs/kickstart)
+[kick start application](http://internal-bioinformatics.cruk.cam.ac.uk/docs/nf-kickstart)
 will fetch FASTQ files from the sequencing archive onto local disk and create a
 CSV file with the information about the files in the project directory (a file called
 `alignment.csv`) necessary to run this p1ipeline.
@@ -150,7 +150,7 @@ pairs, samples to whom those files belong, and additional information that can b
 to the aligned files as read group annotations.
 
 At CRUK-CI, we have the
-[kick start application](http://internal-bioinformatics.cruk.cam.ac.uk/docs/kickstart)
+[kick start application](http://internal-bioinformatics.cruk.cam.ac.uk/docs/nf-kickstart)
 to help with this.
 
 #### `alignment.csv` Columns
