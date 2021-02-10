@@ -55,7 +55,7 @@ workflow
 
     csv_channel =
         channel
-            .fromPath("alignment.csv")
+            .fromPath(params.aligmentCSV)
             .splitCsv(header: true, quote: '"')
 
     alignment(csv_channel)

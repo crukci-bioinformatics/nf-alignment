@@ -3,8 +3,8 @@
 This project is a rewrite of our alignment pipeline to perform the same tasks as
 before but using Nextflow rather than our home-grown work flow system.
 
-There are links in this document that will only work from within CRUK-CI. It is
-not intended for external use.
+_There are links in this document that will only work from within CRUK-CI. It is
+not intended for external use._
 
 ### What It Does
 
@@ -31,7 +31,7 @@ Within CRUK-CI we have tools for helping with assembling FASTQ files. The
 [kick start application](http://internal-bioinformatics.cruk.cam.ac.uk/docs/kickstart)
 will fetch FASTQ files from the sequencing archive onto local disk and create a
 CSV file with the information about the files in the project directory (a file called
-`alignment.csv`) necessary to run this pipeline.
+`alignment.csv`) necessary to run this p1ipeline.
 
 Alternatively, one can create a folder structure containing a folder `fastq`, into
 which the FASTQ files should be put. The kick start application can be run in
@@ -124,3 +124,64 @@ nextflow run crukci-bioinformatics/nf-alignment --mergeSamples=true
 
 Command line switches override values defined in `alignment.config`.
 
+### Content of `alignment.csv`
+
+The `alignment.csv` file drives the alignment pipeline. It lists FASTQ files or file
+pairs, samples to whom those files belong, and additional information that can be added
+to the aligned files as read group annotations.
+
+At CRUK-CI, we have the
+[kick start application](http://internal-bioinformatics.cruk.cam.ac.uk/docs/kickstart)
+to help with this.
+
+#### `alignment.csv` Columns
+
+The order of the columns does not matter in this file, but the name of the columns
+(the first row) is required. There may be additional columns in this file but these
+are the ones used by the pipeline.
+
+##### "Read1", "Read2"
+
+These columns are required. "Read1" is the name of the single or first read FASTQ files;
+"Read2" is the name of the second read for paired end data. "Read2" can be left blank
+for single read data (it will not be read).
+
+##### "SampleName"
+
+The "SampleName" column defines the sample name each FASTQ file belongs to. This column
+becomes required when the `--mergeSamples` option is used. All aligned files that
+have the same sample name can be merged together into one BAM file for that sample.
+Ideally, one should avoid special characters in sample names: the sample name becomes
+the base of the file name.
+
+##### "ReadGroup"
+
+The read group id for the file. If not defined, a default of "Z" is used.
+
+##### "Library"
+
+Read group library id. This must be set to a value; there is no default.
+
+##### "SourceMaterial"
+
+Read group source material, or sample. Defaults to "Not available" if not set.
+
+##### "PlatformUnit"
+
+Read group platform unit. This must be set to a value; there is no default.
+
+##### "SequencingPlatform"
+
+Read group sequencing platform. Defaults to "Unknown" if not set.
+
+##### "PlatformModel"
+
+Read group platform model. Optional.
+
+##### "SequencingCentre"
+
+Read group sequencing centre. Optional.
+
+##### "SequencingDate"
+
+Read group sequencing date. Optional. If given, is must be in the format `yyyy-mm-dd`.
