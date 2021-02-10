@@ -124,6 +124,25 @@ nextflow run crukci-bioinformatics/nf-alignment --mergeSamples=true
 
 Command line switches override values defined in `alignment.config`.
 
+### Reference Data
+
+The pipeline expects reference data to be set up in the structure defined by
+[our reference data pipeline](http://internal-bioinformatics.cruk.cam.ac.uk/docs/referencegenomes/main.html).
+The profiles have default paths for the root location of this structure for use on our
+cluster and Bioinformatics core server. For the "standard" profile on one's local
+machine, the reference root should be defined in either `alignment.config` or on the
+command line.
+
+```
+params {
+    referenceRoot = '/home/reference_data'
+}
+```
+
+The default "standard" location is the cluster references, which require the directories
+to be network mounted on one's desktop. That is a handy short cut but not suitable for
+all.
+
 ### Content of `alignment.csv`
 
 The `alignment.csv` file drives the alignment pipeline. It lists FASTQ files or file

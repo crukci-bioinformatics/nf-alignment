@@ -31,6 +31,11 @@ def checkParameters(params)
             log.error 'Genome assembly not set. Use --assembly with the genome version, eg. "GRCh38".'
             errors = true
         }
+        if (!containsKey('referenceRoot'))
+        {
+            log.error 'Reference data root directory not set. Use --referenceRoot with path to the top of the reference structure.'
+            errors = true
+        }
 
         if (errors)
         {
@@ -78,6 +83,13 @@ def checkParameters(params)
                     log.error "Aligner must be one of 'bwa', 'bwamem' or 'star'."
                     errors = true
                     break
+            }
+
+            def refRootFile = file(referenceRoot)
+            if (!Files.isDirectory(refRootFile))
+            {
+                log.error "Reference data root directory '${refRootFile}' does not exist."
+                errors = true
             }
         }
 
