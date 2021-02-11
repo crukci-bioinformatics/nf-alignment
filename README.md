@@ -65,7 +65,7 @@ nextflow run crukci-bioinformatics/nf-alignment
 ```
 
 That is it. It will align all the FASTQ files (or file pairs) into BAM files, placing
-them into a directory `bams` in the project directory.
+them into a directory `bam` in the project directory.
 
 
 ### Controlling the Pipeline
@@ -108,7 +108,7 @@ turned on, extends the pipeline to merge FASTQ files into a file per unique samp
 in `alignment.csv`. `createCoverage` only applies after sample merging and creates
 _bedgraph_ and _bigwig_ files for each sample BAM file.
 
-Sample bam files are put into a directory `samplebams` in the project directory. The
+Sample bam files are put into a directory `samplebam` in the project directory. The
 coverage files are also put into this directory alongside the BAM files.
 
 #### Command Line Switches
@@ -123,6 +123,17 @@ nextflow run crukci-bioinformatics/nf-alignment --mergeSamples=true
 ```
 
 Command line switches override values defined in `alignment.config`.
+
+#### Further Configuration
+
+`alignment.config` is a full part of the
+[Nextflow configuration](https://www.nextflow.io/docs/latest/config.html).
+As such, and assuming one knows what one is doing, it can include any additional
+configuration documented in the Nextflow pages, such as
+[email notification](https://www.nextflow.io/docs/latest/config.html#scope-mail),
+[tuning processes](https://www.nextflow.io/docs/latest/config.html#scope-process) or
+[custom profiles](https://www.nextflow.io/docs/latest/config.html#config-profiles).
+
 
 ### Reference Data
 
