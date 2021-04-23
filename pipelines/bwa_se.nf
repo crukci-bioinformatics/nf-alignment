@@ -1,8 +1,8 @@
 params.aligner = "bwa"
 
 include { basenameExtractor } from "../components/functions"
-include { bwa_aln; bwa_samse } from "../components/bwaprocesses"
-include { singleread } from "../components/singleread"
+include { split_fastq; bwa_aln; bwa_samse } from "../processes/bwa"
+include { singleread } from "./singleread"
 
 workflow bwa_se
 {
@@ -17,9 +17,16 @@ workflow bwa_se
                 row ->
                 tuple basenameExtractor(row.Read1), 1, file("${params.fastqDir}/${row.Read1}")
             }
-            .splitFastq(by: params.chunkSize, file: true, compress: params.compressSplitFastq)
 
-        bwa_aln(fastq_channel)
-        bwa_samse(bwa_aln.out)
+        split_fastq(fastq_channel)
+        
+        per_chunk_channel = split_fastq.out
+            .flatMap
+            {
+                basename, read, chunks ->
+                chunks.collect { tuple basename, read, it }
+            }
+        
+        bwa_aln(per_chunk_channel) | bwa_samse
         singleread(bwa_samse.out, csv_channel)
 }

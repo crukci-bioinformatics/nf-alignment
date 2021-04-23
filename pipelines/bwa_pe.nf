@@ -1,8 +1,9 @@
 params.aligner = "bwa"
 
 include { basenameExtractor } from "../components/functions"
-include { bwa_aln as bwa_aln_1; bwa_aln as bwa_aln_2; bwa_sampe } from "../components/bwaprocesses"
-include { pairedend } from "../components/pairedend"
+include { split_fastq as split_fastq_1; split_fastq as split_fastq_2;
+          bwa_aln as bwa_aln_1; bwa_aln as bwa_aln_2; bwa_sampe } from "../processes/bwa"
+include { pairedend } from "./pairedend"
 
 workflow bwa_pe
 {
@@ -17,7 +18,6 @@ workflow bwa_pe
                 row ->
                 tuple basenameExtractor(row.Read1), file("${params.fastqDir}/${row.Read1}"), file("${params.fastqDir}/${row.Read2}")
             }
-            .splitFastq(by: params.chunkSize, pe:true, file: true, compress: params.compressSplitFastq)
 
         // Split into two channels, one read in each, for BWA aln.
 
@@ -36,9 +36,32 @@ workflow bwa_pe
                 base, read1, read2 ->
                 tuple base, 2, read2
             }
+        
+        // Split the files in these channels into chunks.
 
-        bwa_aln_1(read1_channel)
-        bwa_aln_2(read2_channel)
+        split_fastq_1(read1_channel)
+        split_fastq_2(read2_channel)
+
+        // Map these channels so there is a single FASTQ per item in the channel
+        
+        read1_per_chunk_channel = split_fastq_1.out
+            .flatMap
+            {
+                basename, read, chunks ->
+                chunks.collect { tuple basename, read, it }
+            }
+    
+        read2_per_chunk_channel = split_fastq_2.out
+            .flatMap
+            {
+                basename, read, chunks ->
+                chunks.collect { tuple basename, read, it }
+            }
+    
+        // Align the chunks in independent channels.
+
+        bwa_aln_1(read1_per_chunk_channel)
+        bwa_aln_2(read2_per_chunk_channel)
 
         // Combine the output of these two channels into one, grouping on base name and chunk number.
 

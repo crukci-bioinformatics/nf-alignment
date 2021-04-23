@@ -9,13 +9,27 @@
 # are written to the output file unchanged.
 
 
-!{params.java} \
--Xms!{task.memory.toMega()}m -Xmx!{task.memory.toMega()}m \
+export TMPDIR=temp
+mkdir -p "$TMPDIR"
+
+function clean_up
+{
+    rm -rf "$TMPDIR"
+    exit $1
+}
+
+trap clean_up SIGHUP SIGINT SIGTERM
+
+!{params.java} -Djava.io.tmpdir="$TMPDIR" \
+-Xms!{javaMem}m -Xmx!{javaMem}m \
 -jar !{params.picard} FixMateInformation \
 INPUT=!{inBam} \
 OUTPUT="!{outBam}" \
 SORT_ORDER=coordinate \
+MAX_RECORDS_IN_RAM=!{readsInRam} \
 CREATE_INDEX=false \
 COMPRESSION_LEVEL=1 \
-VALIDATION_STRINGENCY=LENIENT \
-TMP_DIR=!{workDir}
+VALIDATION_STRINGENCY=SILENT \
+TMP_DIR="$TMPDIR"
+
+clean_up $?

@@ -1,47 +1,51 @@
 Bootstrap: docker
 
-From: centos:7
+From: centos:8
+
+%environment
+
+export JAVA_HOME=/usr/lib/jvm/jre-11
+export PATH=$JAVA_HOME/bin:$PATH
 
 %post
 
 ## Installation variables, including versions of the software to install.
 
 INSTALL_DIR=/opt
-BUILD_DIR=/tmp/alignment_software_build
+BUILD_DIR=/var/tmp/alignment_software_build
 
 BEDTOOLS=2.29.2
 BWA=0.7.17
 BWAMEM=2.1
-PICARD=2.9.5
+PICARD=2.25.1
 SAMTOOLS=1.11
 STAR=2.7.7a
 
 TAROPTS="--no-same-owner --no-same-permissions"
 
-echo "LANG=en_US.utf8" > /etc/locale.conf
-export LANG=en_US.utf8
-export LC_CTYPE=en_US
-export LC_TIME=$LC_CTYPE
-export LC_COLLATE=$LC_CTYPE
-export LC_MESSAGES=$LC_CTYPE 
-export LC_MONETARY=$LC_CTYPE 
-export LC_PAPER=$LC_CTYPE 
-export LC_MEASUREMENT=$LC_CTYPE 
+dnf install -y dnf-plugins-core epel-release
+dnf config-manager --set-enabled powertools
+dnf makecache && dnf update -y
+dnf install -y \
+	bzip2 bzip2-devel gcc-c++ git java-11-openjdk-headless \
+	libcurl-devel make ncurses-devel openssl-devel python2 \
+	R-core unzip wget xz-devel zlib-devel
 
-yum update -y
-yum install -y \
-	bc bzip2 bzip2-devel cmake gcc-c++ gzip java-11-openjdk-headless \
-	libcurl-devel make ncurses-devel openssl-devel perl \
-	R-core tar unzip wget xz-devel zlib-devel
-
+alternatives --set python /usr/bin/python2
 mkdir -p ${INSTALL_DIR} ${BUILD_DIR}
+
+# Fastq splitter
+cd ${BUILD_DIR}
+git clone https://github.com/vasisht/fastq_splitter.git
+cd ${BUILD_DIR}/fastq_splitter
+gcc -o /usr/local/bin/splitfastq fastq_splitter.c -lz
 
 # samtools
 cd ${BUILD_DIR}
 wget https://github.com/samtools/samtools/releases/download/${SAMTOOLS}/samtools-${SAMTOOLS}.tar.bz2
 tar ${TAROPTS} -jxf samtools-${SAMTOOLS}.tar.bz2
 cd ${BUILD_DIR}/samtools-${SAMTOOLS}
-./configure --prefix=${INSTALL_DIR}/samtools-${SAMTOOLS} && \
+./configure --prefix="${INSTALL_DIR}/samtools-${SAMTOOLS}" && \
 make && \
 make install
 
@@ -50,7 +54,7 @@ cd ${BUILD_DIR}
 wget https://github.com/arq5x/bedtools2/releases/download/v${BEDTOOLS}/bedtools-${BEDTOOLS}.tar.gz
 tar ${TAROPTS} -xzf ${BUILD_DIR}/bedtools-${BEDTOOLS}.tar.gz
 cd ${BUILD_DIR}/bedtools2
-make install prefix="" DESTDIR=${INSTALL_DIR}/bedtools-${BEDTOOLS}
+make install prefix="" DESTDIR="${INSTALL_DIR}/bedtools-${BEDTOOLS}"
 
 # BWA
 cd ${BUILD_DIR}
@@ -84,30 +88,7 @@ chmod a+rx *
 cd ${INSTALL_DIR}
 wget -O picard-${PICARD}.jar https://github.com/broadinstitute/picard/releases/download/${PICARD}/picard.jar
 
+
+## Clean up
 cd /
 rm -rf ${BUILD_DIR}
-
-
-%test
-
-INSTALL_DIR=/opt
-BEDTOOLS=2.29.2
-BWA=0.7.17
-PICARD=2.9.5
-SAMTOOLS=1.11
-STAR=2.7.7a
-
-if [ ! -e ${INSTALL_DIR}/samtools-${SAMTOOLS}/bin/samtools ]
-then
-    echo "Samtools has not installed correctly." >&2
-fi
-
-if [ ! -e ${INSTALL_DIR}/bedtools-${BEDTOOLS}/bin/bamToFastq ]
-then
-    echo "Bedtools has not installed correctly." >&2
-fi
-
-if [ ! -e ${INSTALL_DIR}/bwa-${BWA}/bwa ]
-then
-    echo "BWA has not installed correctly." >&2
-fi

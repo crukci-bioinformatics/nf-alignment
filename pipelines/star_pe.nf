@@ -1,8 +1,8 @@
 params.aligner = "star"
 
 include { basenameExtractor } from "../components/functions"
-include { STAR } from "../components/processes"
-include { pairedend } from "../components/pairedend"
+include { STAR } from "../processes/star"
+include { pairedend } from "./pairedend"
 
 workflow star_pe
 {

@@ -48,8 +48,19 @@ then
     RGSM="Not available"
 fi
 
-!{params.java} \
--Xms!{task.memory.toMega()}m -Xmx!{task.memory.toMega()}m \
+export TMPDIR=temp
+mkdir -p "$TMPDIR"
+
+function clean_up
+{
+    rm -rf "$TMPDIR"
+    exit $1
+}
+
+trap clean_up SIGHUP SIGINT SIGTERM
+
+!{params.java} -Djava.io.tmpdir="$TMPDIR" \
+-Xms!{javaMem}m -Xmx!{javaMem}m \
 -jar !{params.picard} AddOrReplaceReadGroups \
 INPUT=!{inBam} \
 OUTPUT="!{outBam}" \
@@ -61,7 +72,10 @@ RGDT="$RGDT" \
 RGPL="$RGPL" \
 RGPM="$RGPM" \
 RGSM="$RGSM" \
+MAX_RECORDS_IN_RAM=!{readsInRam} \
 CREATE_INDEX=true \
 COMPRESSION_LEVEL=5 \
-VALIDATION_STRINGENCY=LENIENT \
-TMP_DIR=!{workDir}
+VALIDATION_STRINGENCY=SILENT \
+TMP_DIR="$TMPDIR"
+
+clean_up $?

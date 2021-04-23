@@ -10,8 +10,19 @@
 # Note: Metrics labeled as percentages are actually expressed as fractions!
 
 
-!{params.java} \
--Xms!{task.memory.toMega()}m -Xmx!{task.memory.toMega()}m \
+export TMPDIR=temp
+mkdir -p "$TMPDIR"
+
+function clean_up
+{
+    rm -rf "$TMPDIR"
+    exit $1
+}
+
+trap clean_up SIGHUP SIGINT SIGTERM
+
+!{params.java} -Djava.io.tmpdir="$TMPDIR" \
+-Xms!{javaMem}m -Xmx!{javaMem}m \
 -jar !{params.picard} CollectWgsMetrics \
 INPUT=!{inBam} \
 OUTPUT="!{metrics}" \
@@ -21,5 +32,7 @@ MINIMUM_BASE_QUALITY=20 \
 COVERAGE_CAP=250 \
 LOCUS_ACCUMULATION_CAP=100000 \
 COUNT_UNPAIRED=!{countUnpairedReads} \
-VALIDATION_STRINGENCY=LENIENT \
-TMP_DIR=!{workDir}
+VALIDATION_STRINGENCY=SILENT \
+TMP_DIR="$TMPDIR"
+
+clean_up $?

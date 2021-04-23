@@ -1,8 +1,8 @@
 params.aligner = "bwamem"
 
 include { basenameExtractor } from "../components/functions"
-include { bwa_mem } from "../components/bwaprocesses"
-include { pairedend } from "../components/pairedend"
+include { bwa_mem } from "../processes/bwa"
+include { pairedend } from "./pairedend"
 
 workflow bwamem_pe
 {

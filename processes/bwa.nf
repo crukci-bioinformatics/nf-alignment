@@ -1,6 +1,26 @@
 import nextflow.util.BlankSeparatedList
 
 /*
+ * Fastq Splitter.
+ */
+process split_fastq
+{
+    cpus 1
+    memory '8MB'
+
+    input:
+        tuple val(basename), val(read), path(fastqFile)
+    
+    output:
+        tuple val(basename), val(read), path("*-S??????.fq.gz")
+    
+    shell:
+        """
+        splitfastq -n !{params.chunkSize} -p "!{basename}.r_!{read}" "!{fastqFile}"
+        """
+}
+
+/*
  * Old style BWA.
  */
 
@@ -17,7 +37,7 @@ process bwa_aln
     shell:
         // "def" makes the matcher local scope, so it's not stored in the Nextflow context map
         // and stops the "Cannot serialize context map. Resume will not work on this process" messages.
-        def m = fastqFile.name =~ /\.(\d+)\.fq(\.gz)?$/
+        def m = fastqFile.name =~ /.+-S(\d{6})\.fq(\.gz)?$/
         assert m : "Don't have file pattern with chunk numbers: '${fastqFile.name}'"
         chunk = m[0][1]
 
@@ -81,7 +101,7 @@ process bwa_mem
         tuple val(basename), val(chunk), path(outBam)
 
     shell:
-        def m = sequenceFiles[0].name =~ /\.(\d+)\.fq(\.gz)?$/
+        def m = sequenceFiles[0].name =~ /.+-S(\d{6})\.fq(\.gz)?$/
         assert m : "Don't have file pattern with chunk numbers: '${sequenceFiles[0].name}'"
         chunk = m[0][1]
 

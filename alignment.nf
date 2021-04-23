@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl = 2
 
-include { checkParameters; fetchContainer } from "./components/functions"
+include { checkParameters } from "./components/functions"
 
 if (!checkParameters(params))
 {
@@ -51,8 +51,6 @@ switch (params.aligner)
 
 workflow
 {
-    fetchContainer()
-
     csv_channel =
         channel
             .fromPath(params.aligmentCSV)

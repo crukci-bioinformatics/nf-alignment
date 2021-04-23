@@ -2,7 +2,7 @@
 
 function clean_up
 {
-    rm -rf "!{workDir}/temp_!{basename}"
+    rm -rf "temp"
     exit $1
 }
 
@@ -20,7 +20,7 @@ mkdir -p "!{basename}"
     --readFilesCommand zcat \
     --outSAMtype BAM Unsorted \
     --genomeDir "!{params.starIndex}" \
-    --outTmpDir "!{workDir}/temp_!{basename}" \
+    --outTmpDir "temp" \
     --outFileNamePrefix "!{basename}/" \
     --readFilesIn !{sequenceFiles}
 

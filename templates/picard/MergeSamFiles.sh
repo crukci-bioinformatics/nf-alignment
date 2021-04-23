@@ -12,13 +12,27 @@
 # read groups, see the GATK Dictionary entry. (https://www.broadinstitute.org/gatk/guide/article?id=6472)
 
 
-!{params.java} \
--Xms!{task.memory.toMega()}m -Xmx!{task.memory.toMega()}m \
+export TMPDIR=temp
+mkdir -p "$TMPDIR"
+
+function clean_up
+{
+    rm -rf "$TMPDIR"
+    exit $1
+}
+
+trap clean_up SIGHUP SIGINT SIGTERM
+
+!{params.java} -Djava.io.tmpdir="$TMPDIR" \
+-Xms!{javaMem}m -Xmx!{javaMem}m \
 -jar !{params.picard} MergeSamFiles \
 !{'INPUT=' + inBams.join(' INPUT=')} \
 OUTPUT="!{outBam}" \
 ASSUME_SORTED=true \
+MAX_RECORDS_IN_RAM=!{readsInRam} \
 CREATE_INDEX=true \
 COMPRESSION_LEVEL=5 \
-VALIDATION_STRINGENCY=LENIENT \
-TMP_DIR=!{workDir}
+VALIDATION_STRINGENCY=SILENT \
+TMP_DIR="$TMPDIR"
+
+clean_up $?
