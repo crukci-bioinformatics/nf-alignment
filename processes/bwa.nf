@@ -20,8 +20,15 @@ process split_fastq
         """
 }
 
+def extractChunkNumber(f)
+{
+    def m = f.name =~ /.+-S(\d{6})\.fq(\.gz)?$/
+    assert m : "Don't have file pattern with chunk numbers: '${f.name}'"
+    return m[0][1]
+}
+
 /*
- * Old style BWA.
+ * Classic BWA.
  */
 
 process bwa_aln
@@ -35,11 +42,7 @@ process bwa_aln
         tuple val(basename), val(chunk), path(outSai), path(outFastq)
 
     shell:
-        // "def" makes the matcher local scope, so it's not stored in the Nextflow context map
-        // and stops the "Cannot serialize context map. Resume will not work on this process" messages.
-        def m = fastqFile.name =~ /.+-S(\d{6})\.fq(\.gz)?$/
-        assert m : "Don't have file pattern with chunk numbers: '${fastqFile.name}'"
-        chunk = m[0][1]
+        chunk = extractChunkNumber(fastqFile)
 
         outFastq = fastqFile.name
         outSai = "${basename}.r_${read}.${chunk}.sai"
@@ -101,9 +104,7 @@ process bwa_mem
         tuple val(basename), val(chunk), path(outBam)
 
     shell:
-        def m = sequenceFiles[0].name =~ /.+-S(\d{6})\.fq(\.gz)?$/
-        assert m : "Don't have file pattern with chunk numbers: '${sequenceFiles[0].name}'"
-        chunk = m[0][1]
+        chunk = extractChunkNumber(sequenceFiles[0])
 
         outBam = "${basename}.bwamem.${chunk}.bam"
         template "bwa/bwamem.sh"
