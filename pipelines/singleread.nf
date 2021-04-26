@@ -18,29 +18,27 @@ workflow singleread
         sequencing_info_channel
 
     main:
-        picard_sortsam(alignment_channel)
-
-        // Group the outputs by base name.
-        picard_merge_or_markduplicates(picard_sortsam.out.groupTuple())
-
-        picard_alignmentmetrics(picard_merge_or_markduplicates.out.merged_bam)
-        picard_wgsmetrics(picard_merge_or_markduplicates.out.merged_bam, true)
-
         // Add sequencing info back to the channel for read groups.
         // It is available from sequencing_info_channel, the rows from the CSV file.
         read_groups_channel =
+            alignment_channel
+            .combine(sequencing_info_channel.map { tuple basenameExtractor(it.Read1), it }, by: 0)
+
+        picard_addreadgroups(read_groups_channel) | picard_sortsam
+
+        // Group the outputs by base name.
+        picard_merge_or_markduplicates(picard_sortsam.out.groupTuple())
+        picard_alignmentmetrics(picard_merge_or_markduplicates.out.merged_bam)
+        picard_wgsmetrics(picard_merge_or_markduplicates.out.merged_bam, true)
+
+        // Join the output of merge or mark duplicates with the sequencing info
+        // by base name and map to the sample name and BAM files.
+        by_sample_channel =
             picard_merge_or_markduplicates.out.merged_bam
             .join(
                 sequencing_info_channel.map { tuple basenameExtractor(it.Read1), it },
                 failOnDuplicate: true, failOnMismatch: true
             )
-
-        picard_addreadgroups(read_groups_channel)
-
-        // Transform the tuple of base name, BAM and sequencing information from
-        // add read groups to a channel of tuples of sample name plus BAM files (plural).
-        by_sample_channel =
-            picard_addreadgroups.out.final_bam
             .map {
                 basename, bam, sequencingInfo ->
                 tuple sequencingInfo.SampleName, bam

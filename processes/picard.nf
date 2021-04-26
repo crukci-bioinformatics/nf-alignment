@@ -74,6 +74,25 @@ def maxReadsInRam(availableMB, readLength)
 }
 
 
+process picard_addreadgroups
+{
+    label "picard"
+
+    publishDir params.bamDir, mode: "link"
+
+    input:
+        tuple val(basename), val(chunk), path(inBam), val(sequencingInfo)
+
+    output:
+        tuple val(basename), val(chunk), path(outBam)
+
+    shell:
+        outBam = "${basename}.readgroups.${chunk}.bam"
+        javaMem = javaMemMB(task)
+
+        template "picard/AddReadGroups.sh"
+}
+
 process picard_sortsam
 {
     label "picard"
@@ -150,28 +169,6 @@ process picard_merge_or_markduplicates
                 template "picard/MergeSamFiles.sh"
             }
         }
-}
-
-process picard_addreadgroups
-{
-    label "picard"
-
-    publishDir params.bamDir, mode: "link"
-
-    input:
-        tuple val(basename), path(inBam), val(sequencingInfo)
-
-    output:
-        tuple val(basename), path(outBam), val(sequencingInfo), emit: final_bam
-        path outIndex optional true
-
-    shell:
-        outBam = "${alignedFileName(basename)}.bam"
-        outIndex = "${alignedFileName(basename)}.bai"
-        javaMem = javaMemMB(task)
-        readsInRam = maxReadsInRam(javaMem, 100)
-
-        template "picard/AddReadGroups.sh"
 }
 
 process picard_alignmentmetrics
