@@ -1,8 +1,8 @@
 params.aligner = "bwa"
 
 include { basenameExtractor } from "../components/functions"
-include { split_fastq as split_fastq_1; split_fastq as split_fastq_2;
-          bwa_aln as bwa_aln_1; bwa_aln as bwa_aln_2; bwa_sampe } from "../processes/bwa"
+include { split_fastq as split_fastq_1; split_fastq as split_fastq_2 } from "../processes/fastq"
+include { splitToPerChunkChannel; bwa_aln as bwa_aln_1; bwa_aln as bwa_aln_2; bwa_sampe } from "../processes/bwa"
 include { pairedend } from "./pairedend"
 
 workflow bwa_pe
@@ -36,28 +36,17 @@ workflow bwa_pe
                 base, read1, read2 ->
                 tuple base, 2, read2
             }
-        
+
         // Split the files in these channels into chunks.
 
         split_fastq_1(read1_channel)
         split_fastq_2(read2_channel)
 
         // Map these channels so there is a single FASTQ per item in the channel
-        
-        read1_per_chunk_channel = split_fastq_1.out
-            .flatMap
-            {
-                basename, read, chunks ->
-                chunks.collect { tuple basename, read, it }
-            }
-    
-        read2_per_chunk_channel = split_fastq_2.out
-            .flatMap
-            {
-                basename, read, chunks ->
-                chunks.collect { tuple basename, read, it }
-            }
-    
+
+        read1_per_chunk_channel = splitToPerChunkChannel(split_fastq_1.out)
+        read2_per_chunk_channel = splitToPerChunkChannel(split_fastq_2.out)
+
         // Align the chunks in independent channels.
 
         bwa_aln_1(read1_per_chunk_channel)

@@ -107,7 +107,7 @@ process picard_sortsam
         outBam = "${basename}.sorted.${chunk}.bam"
         javaMem = javaMemMB(task)
         readsInRam = maxReadsInRam(javaMem, 100)
-        
+
         template "picard/SortSam.sh"
 }
 
@@ -125,7 +125,7 @@ process picard_fixmate
         outBam = "${basename}.fixed.${chunk}.bam"
         javaMem = javaMemMB(task)
         readsInRam = maxReadsInRam(javaMem, 100)
-        
+
         template "picard/FixMateInformation.sh"
 }
 
@@ -257,7 +257,7 @@ process sample_merge_or_markduplicates
         metrics = "${alignedFileName(sampleName)}.duplication.txt"
         javaMem = javaMemMB(task)
         readsInRam = maxReadsInRam(javaMem, 100)
-        
+
         if (params.markDuplicates)
         {
             template "picard/MarkDuplicates.sh"

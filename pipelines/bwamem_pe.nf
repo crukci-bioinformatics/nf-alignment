@@ -1,7 +1,8 @@
 params.aligner = "bwamem"
 
-include { basenameExtractor; extractChunkNumber } from "../components/functions"
-include { split_fastq as split_fastq_1; split_fastq as split_fastq_2; bwa_mem } from "../processes/bwa"
+include { basenameExtractor } from "../components/functions"
+include { split_fastq as split_fastq_1; split_fastq as split_fastq_2 } from "../processes/fastq"
+include { bwa_mem; splitToPerChunkChannel } from "../processes/bwamem"
 include { pairedend } from "./pairedend"
 
 
@@ -36,30 +37,19 @@ workflow bwamem_pe
                 base, read1, read2 ->
                 tuple base, 2, read2
             }
-        
+
         split_fastq_1(read1_channel)
         split_fastq_2(read2_channel)
 
         // Flatten the list of files in both channels to have two channels with
         // a single file per item. Also extract the chunk number from the file name.
-        
-        per_chunk_channel_1 = split_fastq_1.out
-            .flatMap
-            {
-                basename, read, chunks ->
-                chunks.collect { tuple basename, extractChunkNumber(it), it }
-            }
-    
-        per_chunk_channel_2 = split_fastq_2.out
-            .flatMap
-            {
-                basename, read, chunks ->
-                chunks.collect { tuple basename, extractChunkNumber(it), it }
-            }
-        
+
+        per_chunk_channel_1 = splitToPerChunkChannel(split_fastq_1.out)
+        per_chunk_channel_2 = splitToPerChunkChannel(split_fastq_2.out)
+
         // Combine these channels by base name and chunk number, and present the
         // two individual files as a list of two.
-        
+
         combined_chunk_channel = per_chunk_channel_1
             .combine(per_chunk_channel_2, by: 0..1)
             .map

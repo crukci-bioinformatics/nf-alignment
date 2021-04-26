@@ -2,6 +2,7 @@ import nextflow.util.BlankSeparatedList
 
 include { extractChunkNumber } from '../components/functions'
 
+
 /*
  * Fastq Splitter.
  */
@@ -12,14 +13,29 @@ process split_fastq
 
     input:
         tuple val(basename), val(read), path(fastqFile)
-    
+
     output:
         tuple val(basename), val(read), path("*-S??????.fq.gz")
-    
+
     shell:
         """
         splitfastq -n !{params.chunkSize} -p "!{basename}.r_!{read}" "!{fastqFile}"
         """
+}
+
+def splitToPerChunkChannel(splitChannel)
+{
+    return splitChannel.flatMap
+    {
+        basename, read, chunks ->
+        if (chunks instanceof Collection)
+        {
+            return chunks.collect { tuple basename, read, it }
+        }
+
+        assert chunks instanceof java.nio.file.Path : "chunks is not a Path for ${basename} read ${read}"
+        Collections.singletonList(tuple basename, read, chunks)
+    }
 }
 
 /*
@@ -79,28 +95,4 @@ process bwa_sampe
         fastqFiles = new BlankSeparatedList(fastqFile1, fastqFile2)
         outBam = "${basename}.bwa.${chunk}.bam"
         template "bwa/bwasampe.sh"
-}
-
-/*
- * BWAmem.
- */
-
-process bwa_mem
-{
-    cpus 4
-    memory { 8.GB * task.attempt }
-    time 8.hour
-    maxRetries 2
-
-    input:
-        tuple val(basename), file(sequenceFiles)
-
-    output:
-        tuple val(basename), val(chunk), path(outBam)
-
-    shell:
-        chunk = extractChunkNumber(sequenceFiles[0])
-
-        outBam = "${basename}.bwamem.${chunk}.bam"
-        template "bwa/bwamem.sh"
 }
