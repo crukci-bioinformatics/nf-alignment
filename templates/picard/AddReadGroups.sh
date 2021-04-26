@@ -12,22 +12,10 @@
 # This tool accepts INPUT BAM and SAM files or URLs from the Global Alliance for Genomics and Health (GA4GH)
 # (see http://ga4gh.org/#/documentation).
 
-RGID="!{sequencingInfo['ReadGroup']}"
-if [ "x$RGID" == "x" ]
-then
-    RGID="Z"
-fi
-
 RGCN="!{sequencingInfo['SequencingCentre']}"
 if [ "x$RGCN" == "x" ]
 then
     RGCN="null"
-fi
-
-RGPL="!{sequencingInfo['SequencingPlatform']}"
-if [ "x$RGPL" == "x" ]
-then
-    RGPL="Unknown"
 fi
 
 RGDT="!{sequencingInfo['SequencingDate']}"
@@ -36,10 +24,34 @@ then
     RGDT="null"
 fi
 
+RGID="!{sequencingInfo['ReadGroup']}"
+if [ "x$RGID" == "x" ]
+then
+    RGID="Z"
+fi
+
+RGLB="!{sequencingInfo['Library']}"
+if [ "x$RGLB" == "x" ]
+then
+    RGPL="Unknown"
+fi
+
+RGPL="!{sequencingInfo['SequencingPlatform']}"
+if [ "x$RGPL" == "x" ]
+then
+    RGPL="Unknown"
+fi
+
 RGPM="!{sequencingInfo['PlatformModel']}"
 if [ "x$RGPM" == "x" ]
 then
     RGPM="null"
+fi
+
+RGPU="!{sequencingInfo['PlatformUnit']}"
+if [ "x$RGPU" == "x" ]
+then
+    RGPU="Not available"
 fi
 
 RGSM="!{sequencingInfo['SourceMaterial']}"
@@ -64,13 +76,13 @@ trap clean_up SIGHUP SIGINT SIGTERM
 -jar !{params.picard} AddOrReplaceReadGroups \
 INPUT=!{inBam} \
 OUTPUT="!{outBam}" \
-RGLB="!{sequencingInfo['Library']}" \
-RGPU="!{sequencingInfo['PlatformUnit']}" \
-RGID="$RGID" \
 RGCN="$RGCN" \
 RGDT="$RGDT" \
+RGID="$RGID" \
+RGLB="$RGLB" \
 RGPL="$RGPL" \
 RGPM="$RGPM" \
+RGPU="$RGPU" \
 RGSM="$RGSM" \
 CREATE_INDEX=false \
 COMPRESSION_LEVEL=5 \
