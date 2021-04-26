@@ -1,5 +1,5 @@
 include {
-    picard_sortsam; picard_markduplicates; picard_addreadgroups;
+    picard_sortsam; picard_merge_or_markduplicates; picard_addreadgroups;
     picard_alignmentmetrics; picard_wgsmetrics;
     sample_merge_or_markduplicates;
     sample_alignmentmetrics; sample_wgsmetrics
@@ -21,15 +21,15 @@ workflow singleread
         picard_sortsam(alignment_channel)
 
         // Group the outputs by base name.
-        picard_markduplicates(picard_sortsam.out.groupTuple())
+        picard_merge_or_markduplicates(picard_sortsam.out.groupTuple())
 
-        picard_alignmentmetrics(picard_markduplicates.out.merged_bam)
-        picard_wgsmetrics(picard_markduplicates.out.merged_bam, true)
+        picard_alignmentmetrics(picard_merge_or_markduplicates.out.merged_bam)
+        picard_wgsmetrics(picard_merge_or_markduplicates.out.merged_bam, true)
 
         // Add sequencing info back to the channel for read groups.
         // It is available from sequencing_info_channel, the rows from the CSV file.
         read_groups_channel =
-            picard_markduplicates.out.merged_bam
+            picard_merge_or_markduplicates.out.merged_bam
             .join(
                 sequencing_info_channel.map { tuple basenameExtractor(it.Read1), it },
                 failOnDuplicate: true, failOnMismatch: true

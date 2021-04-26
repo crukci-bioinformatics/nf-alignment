@@ -1,5 +1,5 @@
 include {
-    picard_fixmate; picard_markduplicates; picard_addreadgroups;
+    picard_fixmate; picard_merge_or_markduplicates; picard_addreadgroups;
     picard_alignmentmetrics; picard_wgsmetrics; picard_insertmetrics;
     sample_merge_or_markduplicates;
     sample_alignmentmetrics; sample_wgsmetrics; sample_insertmetrics
@@ -21,16 +21,16 @@ workflow pairedend
         picard_fixmate(alignment_channel)
 
         // Group the outputs by base name.
-        picard_markduplicates(picard_fixmate.out.groupTuple())
+        picard_merge_or_markduplicates(picard_fixmate.out.groupTuple())
 
-        picard_alignmentmetrics(picard_markduplicates.out.merged_bam)
-        picard_wgsmetrics(picard_markduplicates.out.merged_bam, false)
-        picard_insertmetrics(picard_markduplicates.out.merged_bam)
+        picard_alignmentmetrics(picard_merge_or_markduplicates.out.merged_bam)
+        picard_wgsmetrics(picard_merge_or_markduplicates.out.merged_bam, false)
+        picard_insertmetrics(picard_merge_or_markduplicates.out.merged_bam)
 
         // Add sequencing info back to the channel for read groups.
         // It is available from sequencing_info_channel, the rows from the CSV file.
         read_groups_channel =
-            picard_markduplicates.out.merged_bam
+            picard_merge_or_markduplicates.out.merged_bam
             .join(
                 sequencing_info_channel.map { tuple basenameExtractor(it.Read1), it },
                 failOnDuplicate: true, failOnMismatch: true

@@ -110,7 +110,7 @@ process picard_fixmate
         template "picard/FixMateInformation.sh"
 }
 
-process picard_markduplicates
+process picard_merge_or_markduplicates
 {
     label "picard"
 

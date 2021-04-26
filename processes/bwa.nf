@@ -1,5 +1,7 @@
 import nextflow.util.BlankSeparatedList
 
+include { extractChunkNumber } from '../components/functions'
+
 /*
  * Fastq Splitter.
  */
@@ -18,13 +20,6 @@ process split_fastq
         """
         splitfastq -n !{params.chunkSize} -p "!{basename}.r_!{read}" "!{fastqFile}"
         """
-}
-
-def extractChunkNumber(f)
-{
-    def m = f.name =~ /.+-S(\d{6})\.fq(\.gz)?$/
-    assert m : "Don't have file pattern with chunk numbers: '${f.name}'"
-    return m[0][1]
 }
 
 /*

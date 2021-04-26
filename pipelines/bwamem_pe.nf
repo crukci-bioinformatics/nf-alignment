@@ -1,16 +1,9 @@
 params.aligner = "bwamem"
 
-include { basenameExtractor } from "../components/functions"
-include { split_fastq as split_fastq_1; split_fastq as split_fastq_2;
-          extractChunkNumber; bwa_mem } from "../processes/bwa"
+include { basenameExtractor; extractChunkNumber } from "../components/functions"
+include { split_fastq as split_fastq_1; split_fastq as split_fastq_2; bwa_mem } from "../processes/bwa"
 include { pairedend } from "./pairedend"
 
-def extractChunk(f)
-{
-    def m = f.name =~ /.+-S(\d{6})\.fq(\.gz)?$/
-    assert m : "Don't have file pattern with chunk numbers: '${f.name}'"
-    return m[0][1]
-}
 
 workflow bwamem_pe
 {

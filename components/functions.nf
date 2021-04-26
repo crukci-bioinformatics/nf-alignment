@@ -113,3 +113,10 @@ def alignedFileName(basename)
 {
     "${basename}.${params.aligner}.${params.species}"
 }
+
+def extractChunkNumber(f)
+{
+    def m = f.name =~ /.+-S(\d{6})\.fq(\.gz)?$/
+    assert m : "Don't have file pattern with chunk numbers: '${f.name}'"
+    return m[0][1]
+}
