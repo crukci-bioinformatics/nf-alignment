@@ -73,12 +73,22 @@ def maxReadsInRam(availableMB, readLength)
     return totalReads as long
 }
 
+def trimToNull(str)
+{
+    if (str)
+    {
+        str = str.trim()
+        if (str.length() == 0)
+        {
+            str = null
+        }
+    }
+    return str
+}
 
 process picard_addreadgroups
 {
     label "picard"
-
-    publishDir params.bamDir, mode: "link"
 
     input:
         tuple val(basename), val(chunk), path(inBam), val(sequencingInfo)
@@ -90,6 +100,30 @@ process picard_addreadgroups
         outBam = "${basename}.readgroups.${chunk}.bam"
         javaMem = javaMemMB(task)
 
+        def rgcn = trimToNull(sequencingInfo['SequencingCentre'])
+        RGCN = !rgcn ? "" : "RGCN=\"${rgcn}\""
+
+        def rgdt = trimToNull(sequencingInfo['SequencingDate'])
+        RGDT = !rgdt ? "" : "RGDT=\"${rgdt}\""
+        
+        def rgid = trimToNull(sequencingInfo['ReadGroup'])
+        RGID = !rgid ? "RGID=Z" : "RGID=\"${rgid}\""
+        
+        def rglb = trimToNull(sequencingInfo['Library'])
+        RGLB = !rglb ? "RGLB=Unknown" : "RGLB=\"${rglb}\""
+        
+        def rgpl = trimToNull(sequencingInfo['SequencingPlatform'])
+        RGPL = !rgpl ? "RGPL=Unknown" : "RGPL=\"${rgpl}\""
+        
+        def rgpm = trimToNull(sequencingInfo['PlatformModel'])
+        RGPM = !rgpm ? "" : "RGPM=\"${rgpm}\""
+        
+        def rgpu = trimToNull(sequencingInfo['PlatformUnit'])
+        RGPU = !rgpu ? /RGPU="Not available"/ : "RGPU=\"${rgpu}\""
+        
+        def rgsm = trimToNull(sequencingInfo['SourceMaterial'])
+        RGSM = !rgsm ? /RGSM="Not available"/ : "RGSM=\"${rgsm}\""
+        
         template "picard/AddReadGroups.sh"
 }
 
@@ -133,17 +167,19 @@ process picard_merge_or_markduplicates
 {
     label "picard"
 
-    publishDir params.bamDir, mode: "link", pattern: "*.duplication.txt"
+    publishDir params.bamDir, mode: "link"
 
     input:
         tuple val(basename), path(inBams)
 
     output:
         tuple val(basename), path(outBam), emit: merged_bam
+        path outBai
         path metrics optional true
 
     shell:
-        outBam = "${basename}.duplicates.bam"
+        outBam = "${basename}.bam"
+        outBai = "${basename}.bai"
         metrics = "${basename}.duplication.txt"
         javaMem = javaMemMB(task)
         readsInRam = maxReadsInRam(javaMem, 100)
@@ -154,20 +190,8 @@ process picard_merge_or_markduplicates
         }
         else
         {
-            // Sometimes inBams is a single path, others it is a collections of paths.
-            // Detect if it is a type of collection, and if so, use its size.
-            def numberOfBams = inBams instanceof Collection ? inBams.size() : 1
-
-            if (numberOfBams == 1)
-            {
-                // When "inBams" is exactly one, there is no need to run the single file
-                // through merge. It can just be linked.
-                "ln -s ${inBams} \"${outBam}\""
-            }
-            else
-            {
-                template "picard/MergeSamFiles.sh"
-            }
+            // Even if there is only one file, run in through MergeSamFiles to create the index.
+            template "picard/MergeSamFiles.sh"
         }
 }
 

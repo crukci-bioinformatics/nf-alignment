@@ -12,54 +12,6 @@
 # This tool accepts INPUT BAM and SAM files or URLs from the Global Alliance for Genomics and Health (GA4GH)
 # (see http://ga4gh.org/#/documentation).
 
-RGCN="!{sequencingInfo['SequencingCentre']}"
-if [ "x$RGCN" == "x" ]
-then
-    RGCN="null"
-fi
-
-RGDT="!{sequencingInfo['SequencingDate']}"
-if [ "x$RGDT" == "x" ]
-then
-    RGDT="null"
-fi
-
-RGID="!{sequencingInfo['ReadGroup']}"
-if [ "x$RGID" == "x" ]
-then
-    RGID="Z"
-fi
-
-RGLB="!{sequencingInfo['Library']}"
-if [ "x$RGLB" == "x" ]
-then
-    RGPL="Unknown"
-fi
-
-RGPL="!{sequencingInfo['SequencingPlatform']}"
-if [ "x$RGPL" == "x" ]
-then
-    RGPL="Unknown"
-fi
-
-RGPM="!{sequencingInfo['PlatformModel']}"
-if [ "x$RGPM" == "x" ]
-then
-    RGPM="null"
-fi
-
-RGPU="!{sequencingInfo['PlatformUnit']}"
-if [ "x$RGPU" == "x" ]
-then
-    RGPU="Not available"
-fi
-
-RGSM="!{sequencingInfo['SourceMaterial']}"
-if [ "x$RGSM" == "x" ]
-then
-    RGSM="Not available"
-fi
-
 export TMPDIR=temp
 mkdir -p "$TMPDIR"
 
@@ -76,14 +28,14 @@ trap clean_up SIGHUP SIGINT SIGTERM
 -jar !{params.picard} AddOrReplaceReadGroups \
 INPUT=!{inBam} \
 OUTPUT="!{outBam}" \
-RGCN="$RGCN" \
-RGDT="$RGDT" \
-RGID="$RGID" \
-RGLB="$RGLB" \
-RGPL="$RGPL" \
-RGPM="$RGPM" \
-RGPU="$RGPU" \
-RGSM="$RGSM" \
+!{RGCN} \
+!{RGDT} \
+!{RGID} \
+!{RGLB} \
+!{RGPL} \
+!{RGPM} \
+!{RGPU} \
+!{RGSM} \
 CREATE_INDEX=false \
 COMPRESSION_LEVEL=5 \
 VALIDATION_STRINGENCY=SILENT \
