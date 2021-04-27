@@ -178,9 +178,9 @@ process picard_merge_or_markduplicates
         path metrics optional true
 
     shell:
-        outBam = "${basename}.bam"
-        outBai = "${basename}.bai"
-        metrics = "${basename}.duplication.txt"
+        outBam = "${alignedFileName(basename)}.bam"
+        outBai = "${alignedFileName(basename)}.bai"
+        metrics = "${alignedFileName(basename)}.duplication.txt"
         javaMem = javaMemMB(task)
         readsInRam = maxReadsInRam(javaMem, 100)
 
