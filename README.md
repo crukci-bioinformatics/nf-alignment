@@ -190,7 +190,7 @@ The read group id for the file. If not defined, a default of "Z" is used.
 
 ##### "Library"
 
-Read group library id. This must be set to a value; there is no default.
+Read group library id. Defaults to "Unknown" if not set.
 
 ##### "SourceMaterial"
 
@@ -198,7 +198,7 @@ Read group source material, or sample. Defaults to "Not available" if not set.
 
 ##### "PlatformUnit"
 
-Read group platform unit. This must be set to a value; there is no default.
+Read group platform unit. Defaults to "Not available" if not set.
 
 ##### "SequencingPlatform"
 
