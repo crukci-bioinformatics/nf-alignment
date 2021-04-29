@@ -248,7 +248,6 @@ process picard_insertmetrics
 
     output:
         path metrics optional true
-        path plot optional true
 
     shell:
         metrics = "${alignedFileName(basename)}.insertsize.txt"
@@ -358,7 +357,6 @@ process sample_insertmetrics
 
     output:
         path metrics optional true
-        path plot optional true
 
     shell:
         metrics = "${alignedFileName(sampleName)}.insertsize.txt"

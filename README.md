@@ -141,8 +141,7 @@ The pipeline expects reference data to be set up in the structure defined by
 [our reference data pipeline](http://internal-bioinformatics.cruk.cam.ac.uk/docs/referencegenomes/main.html).
 The profiles have default paths for the root location of this structure for use on our
 cluster and Bioinformatics core server. For the "standard" profile on one's local
-machine, the reference root should be defined in either `alignment.config` or on the
-command line.
+machine, the reference root should be defined in `alignment.config`.
 
 ```
 params {
@@ -153,6 +152,28 @@ params {
 The default "standard" location is the cluster references, which require the directories
 to be network mounted on one's desktop. That is a handy short cut but not suitable for
 all.
+
+One can set explicit parameters outside a standard structure for reference data:
+
+1. `referenceFasta`: The path to the reference FASTA file. Always needed.
+2. `genomeSizes`: The path to the file listing the sizes of the chromosomes and contigs
+in the reference. Only needed if creating coverage files.
+3. `bwaIndex`: The path and prefix to the BWA reference. Only needed when running classic BWA.
+4. `bwamem2Index`: The path and prefix to the BWAmem2 reference. Only needed when running BWAmem2.
+5. `starIndex`: The path to the STAR reference directory. Only needed when running STAR.
+
+### Singularity Cache
+
+The alignment pipeline will fetch the container image it needs from DockerHub automatically.
+It is placed in Nextflow's `work` directory by default for each project where you are using
+the alignment pipeline. It is better to create a common directory elsewhere for Nextflow to
+use so it doesn't fetch the (not small) image every time. This can be done by setting the
+`NXF_SINGULARITY_CACHEDIR` environment variable on the command line, or more practically
+in your `.bash_profile`.
+
+```
+export NXF_SINGULARITY_CACHEDIR=/data/my_nextflow_singularity_cache
+```
 
 ### Content of `alignment.csv`
 
@@ -190,7 +211,7 @@ The read group id for the file. If not defined, a default of "Z" is used.
 
 ##### "Library"
 
-Read group library id. This must be set to a value; there is no default.
+Read group library id. Defaults to "Unknown" if not set.
 
 ##### "SourceMaterial"
 
@@ -198,7 +219,7 @@ Read group source material, or sample. Defaults to "Not available" if not set.
 
 ##### "PlatformUnit"
 
-Read group platform unit. This must be set to a value; there is no default.
+Read group platform unit. Defaults to "Not available" if not set.
 
 ##### "SequencingPlatform"
 

@@ -2,12 +2,14 @@
 
 nextflow.enable.dsl = 2
 
-include { checkParameters } from "./components/functions"
+include { checkParameters; displayParameters } from "./components/configuration"
 
 if (!checkParameters(params))
 {
     exit 1
 }
+
+displayParameters(params)
 
 switch (params.aligner)
 {
@@ -53,7 +55,7 @@ workflow
 {
     csv_channel =
         channel
-            .fromPath(params.aligmentCSV)
+            .fromPath(params.alignmentCSV)
             .splitCsv(header: true, quote: '"', strip: true)
 
     alignment(csv_channel)
