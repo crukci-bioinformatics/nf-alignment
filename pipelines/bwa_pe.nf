@@ -2,7 +2,7 @@ params.aligner = "bwa"
 
 include { basenameExtractor } from "../components/functions"
 include { split_fastq as split_fastq_1; split_fastq as split_fastq_2 } from "../processes/fastq"
-include { splitToPerChunkChannel; bwa_aln as bwa_aln_1; bwa_aln as bwa_aln_2; bwa_sampe } from "../processes/bwa"
+include { bwa_aln as bwa_aln_1; bwa_aln as bwa_aln_2; bwa_sampe } from "../processes/bwa"
 include { pairedend } from "./pairedend"
 
 workflow bwa_pe
@@ -44,8 +44,8 @@ workflow bwa_pe
 
         // Map these channels so there is a single FASTQ per item in the channel
 
-        read1_per_chunk_channel = splitToPerChunkChannel(split_fastq_1.out)
-        read2_per_chunk_channel = splitToPerChunkChannel(split_fastq_2.out)
+        read1_per_chunk_channel = split_fastq_1.out.transpose()
+        read2_per_chunk_channel = split_fastq_2.out.transpose()
 
         // Align the chunks in independent channels.
 

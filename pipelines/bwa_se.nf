@@ -2,7 +2,7 @@ params.aligner = "bwa"
 
 include { basenameExtractor } from "../components/functions"
 include { split_fastq } from "../processes/fastq"
-include { splitToPerChunkChannel; bwa_aln; bwa_samse } from "../processes/bwa"
+include { bwa_aln; bwa_samse } from "../processes/bwa"
 include { singleread } from "./singleread"
 
 workflow bwa_se
@@ -21,7 +21,9 @@ workflow bwa_se
 
         split_fastq(fastq_channel)
 
-        per_chunk_channel = splitToPerChunkChannel(split_fastq.out)
+        per_chunk_channel = split_fastq.out.transpose()
+
+        per_chunk_channel.view()
 
         bwa_aln(per_chunk_channel) | bwa_samse
         singleread(bwa_samse.out, csv_channel)
