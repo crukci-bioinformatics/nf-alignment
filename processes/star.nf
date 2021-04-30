@@ -6,7 +6,7 @@ process STAR
     maxRetries 2
 
     input:
-        tuple val(basename), file(sequenceFiles)
+        tuple val(basename), path(sequenceFiles), path(starIndex)
 
     output:
         tuple val(basename), val(0), path(outBam)

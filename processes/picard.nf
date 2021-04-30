@@ -202,7 +202,7 @@ process picard_alignmentmetrics
     publishDir params.bamDir, mode: "link"
 
     input:
-        tuple val(basename), path(inBam)
+        tuple val(basename), path(inBam), path(referenceFasta)
 
     output:
         path metrics
@@ -224,7 +224,7 @@ process picard_wgsmetrics
         params.wgsMetrics
 
     input:
-        tuple val(basename), path(inBam)
+        tuple val(basename), path(inBam), path(referenceFasta)
         val(countUnpairedReads)
 
     output:
@@ -244,7 +244,7 @@ process picard_insertmetrics
     publishDir params.bamDir, mode: "link"
 
     input:
-        tuple val(basename), path(inBam)
+        tuple val(basename), path(inBam), path(referenceFasta)
 
     output:
         path metrics optional true
@@ -311,7 +311,7 @@ process sample_alignmentmetrics
     publishDir params.sampleBamDir, mode: "link"
 
     input:
-        tuple val(sampleName), path(inBam)
+        tuple val(sampleName), path(inBam), path(referenceFasta)
 
     output:
         path metrics
@@ -333,7 +333,7 @@ process sample_wgsmetrics
         params.wgsMetrics
 
     input:
-        tuple val(sampleName), path(inBam)
+        tuple val(sampleName), path(inBam), path(referenceFasta)
         val(countUnpairedReads)
 
     output:
@@ -353,7 +353,7 @@ process sample_insertmetrics
     publishDir params.sampleBamDir, mode: "link"
 
     input:
-        tuple val(sampleName), path(inBam)
+        tuple val(sampleName), path(inBam), path(referenceFasta)
 
     output:
         path metrics optional true

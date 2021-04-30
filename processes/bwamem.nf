@@ -14,7 +14,7 @@ process bwa_mem
     maxRetries 2
 
     input:
-        tuple val(basename), file(sequenceFiles)
+        tuple val(basename), path(sequenceFiles), path(bwamem2IndexDir), val(bwamem2IndexPrefix)
 
     output:
         tuple val(basename), val(chunk), path(outBam)

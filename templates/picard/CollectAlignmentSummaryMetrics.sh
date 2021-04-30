@@ -27,7 +27,7 @@ trap clean_up SIGHUP SIGINT SIGTERM
 -jar !{params.picard} CollectAlignmentSummaryMetrics \
 INPUT=!{inBam} \
 OUTPUT="!{metrics}" \
-REFERENCE_SEQUENCE="!{params.referenceFasta}" \
+REFERENCE_SEQUENCE="!{referenceFasta}" \
 VALIDATION_STRINGENCY=SILENT \
 TMP_DIR="$TMPDIR"
 

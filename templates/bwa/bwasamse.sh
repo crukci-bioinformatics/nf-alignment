@@ -4,7 +4,7 @@ set -o pipefail
 
 !{params.bwa} \
     samse \
-    "!{params.bwaIndex}" \
+    "!{bwaIndexDir}/!{bwaIndexPrefix}" \
     !{saiFile} \
     !{fastqFile} | \
 !{params.samtools} \

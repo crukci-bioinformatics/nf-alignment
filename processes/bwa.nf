@@ -11,7 +11,7 @@ process bwa_aln
     label 'bwa'
 
     input:
-        tuple val(basename), val(read), path(fastqFile)
+        tuple val(basename), val(read), path(fastqFile), path(bwaIndexDir), val(bwaIndexPrefix)
 
     output:
         tuple val(basename), val(chunk), path(outSai), path(outFastq)
@@ -27,9 +27,10 @@ process bwa_aln
 process bwa_samse
 {
     label 'bwa'
+    cpus 2
 
     input:
-        tuple val(basename), val(chunk), path(saiFile), path(fastqFile)
+        tuple val(basename), val(chunk), path(saiFile), path(fastqFile), path(bwaIndexDir), val(bwaIndexPrefix)
 
     output:
         tuple val(basename), val(chunk), path(outBam)
@@ -42,11 +43,13 @@ process bwa_samse
 process bwa_sampe
 {
     label 'bwa'
+    cpus 2
 
     input:
         tuple val(basename), val(chunk),
               path(saiFile1), path(fastqFile1),
-              path(saiFile2), path(fastqFile2)
+              path(saiFile2), path(fastqFile2),
+              path(bwaIndexDir), val(bwaIndexPrefix)
 
     output:
         tuple val(basename), val(chunk), path(outBam)

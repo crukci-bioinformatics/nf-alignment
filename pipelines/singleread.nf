@@ -18,6 +18,9 @@ workflow singleread
         sequencing_info_channel
 
     main:
+        reference_fasta_channel = channel.fromPath(params.referenceFasta)
+        genome_sizes_channel = params.genomeSizes ? channel.fromPath(params.genomeSizes) : channel.empty
+
         // Add sequencing info back to the channel for read groups.
         // It is available from sequencing_info_channel, the rows from the CSV file.
         read_groups_channel =
@@ -28,8 +31,11 @@ workflow singleread
 
         // Group the outputs by base name.
         picard_merge_or_markduplicates(picard_sortsam.out.groupTuple())
-        picard_alignmentmetrics(picard_merge_or_markduplicates.out.merged_bam)
-        picard_wgsmetrics(picard_merge_or_markduplicates.out.merged_bam, true)
+
+        picard_with_reference = picard_merge_or_markduplicates.out.merged_bam.combine(reference_fasta_channel)
+
+        picard_alignmentmetrics(picard_with_reference)
+        picard_wgsmetrics(picard_with_reference, true)
 
         // Join the output of merge or mark duplicates with the sequencing info
         // by base name and map to the sample name and BAM files.
@@ -46,8 +52,13 @@ workflow singleread
             .groupTuple()
 
         sample_merge_or_markduplicates(by_sample_channel)
-        sample_alignmentmetrics(sample_merge_or_markduplicates.out.sample_bam)
-        sample_wgsmetrics(sample_merge_or_markduplicates.out.sample_bam, true)
 
-        sample_genomecoverage(sample_merge_or_markduplicates.out.sample_bam) | sample_bedsort | sample_bedgraphtobigwig
+        sample_with_reference = sample_merge_or_markduplicates.out.sample_bam.combine(reference_fasta_channel)
+
+        sample_alignmentmetrics(sample_with_reference)
+        sample_wgsmetrics(sample_with_reference, true)
+
+        sample_with_sizes = sample_merge_or_markduplicates.out.sample_bam.combine(genome_sizes_channel)
+
+        sample_genomecoverage(sample_with_sizes) | sample_bedsort | sample_bedgraphtobigwig
 }

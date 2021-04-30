@@ -26,7 +26,7 @@ trap clean_up SIGHUP SIGINT SIGTERM
 -jar !{params.picard} CollectWgsMetrics \
 INPUT=!{inBam} \
 OUTPUT="!{metrics}" \
-REFERENCE_SEQUENCE="!{params.referenceFasta}" \
+REFERENCE_SEQUENCE="!{referenceFasta}" \
 MINIMUM_MAPPING_QUALITY=20 \
 MINIMUM_BASE_QUALITY=20 \
 COVERAGE_CAP=250 \

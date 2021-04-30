@@ -3,5 +3,5 @@
 !{params.bwa} \
 aln \
 -f "!{outSai}" \
-"!{params.bwaIndex}" \
+"!{bwaIndexDir}/!{bwaIndexPrefix}" \
 !{fastqFile}

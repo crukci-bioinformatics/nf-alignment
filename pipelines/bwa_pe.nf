@@ -11,6 +11,9 @@ workflow bwa_pe
         csv_channel
 
     main:
+        bwa_index_path = file(params.bwaIndex)
+        bwa_index_channel = channel.of(tuple bwa_index_path.parent, bwa_index_path.name)
+
         fastq_channel =
             csv_channel
             .map
@@ -44,8 +47,15 @@ workflow bwa_pe
 
         // Map these channels so there is a single FASTQ per item in the channel
 
-        read1_per_chunk_channel = split_fastq_1.out.transpose()
-        read2_per_chunk_channel = split_fastq_2.out.transpose()
+        read1_per_chunk_channel =
+            split_fastq_1.out
+            .transpose()
+            .combine(bwa_index_channel)
+
+        read2_per_chunk_channel =
+            split_fastq_2.out
+            .transpose()
+            .combine(bwa_index_channel)
 
         // Align the chunks in independent channels.
 
@@ -55,7 +65,9 @@ workflow bwa_pe
         // Combine the output of these two channels into one, grouping on base name and chunk number.
 
         sampe_channel =
-            bwa_aln_1.out.join(bwa_aln_2.out, by: [0,1], failOnDuplicate: true, failOnMismatch: true)
+            bwa_aln_1.out
+            .join(bwa_aln_2.out, by: [0,1], failOnDuplicate: true, failOnMismatch: true)
+            .combine(bwa_index_channel)
 
         bwa_sampe(sampe_channel)
         pairedend(bwa_sampe.out, csv_channel)

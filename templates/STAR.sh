@@ -19,7 +19,7 @@ mkdir -p "!{basename}"
     --genomeLoad NoSharedMemory \
     --readFilesCommand zcat \
     --outSAMtype BAM Unsorted \
-    --genomeDir "!{params.starIndex}" \
+    --genomeDir "!{starIndex}" \
     --outTmpDir "temp" \
     --outFileNamePrefix "!{basename}/" \
     --readFilesIn !{sequenceFiles}

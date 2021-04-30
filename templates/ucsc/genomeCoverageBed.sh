@@ -3,5 +3,5 @@
 !{params.bedtools}/genomeCoverageBed \
 -bga \
 -ibam !{inBam} \
--g "!{params.genomeSizes}" \
+-g "!{genomeSizes}" \
 > "!{bedgraph}"

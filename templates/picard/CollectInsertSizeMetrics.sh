@@ -32,7 +32,7 @@ trap clean_up SIGHUP SIGINT SIGTERM
 INPUT=!{inBam} \
 OUTPUT="!{metrics}" \
 HISTOGRAM_FILE="!{plot}" \
-REFERENCE_SEQUENCE="!{params.referenceFasta}" \
+REFERENCE_SEQUENCE="!{referenceFasta}" \
 ASSUME_SORTED=true \
 VALIDATION_STRINGENCY=SILENT \
 TMP_DIR="$TMPDIR"

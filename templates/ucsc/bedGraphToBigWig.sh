@@ -2,5 +2,5 @@
 
 !{params.ucsctools}/bedGraphToBigWig \
 !{sortedBed} \
-"!{params.genomeSizes}" \
+"!{genomeSizes}" \
 "!{bigwig}"

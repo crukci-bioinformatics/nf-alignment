@@ -11,6 +11,9 @@ workflow bwamem_se
         csv_channel
 
     main:
+        bwamem2_index_path = file(params.bwamem2Index)
+        bwamem2_index_channel = channel.of(tuple bwamem2_index_path.parent, bwamem2_index_path.name)
+
         fastq_channel =
             csv_channel
             .map
@@ -29,6 +32,7 @@ workflow bwamem_se
                 basename, read, fastq ->
                 tuple basename, [ fastq ]
             }
+            .combine(bwamem2_index_channel)
 
         bwa_mem(per_chunk_channel)
         singleread(bwa_mem.out, csv_channel)
