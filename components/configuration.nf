@@ -5,7 +5,7 @@ def checkParameters(params)
     def errors = false
     def referenceRootWarned = false
     def referenceRootWarning = 'Reference data root directory not set. Use --referenceRoot with path to the top of the reference structure.'
-    
+
     params.with
     {
         if (!containsKey('aligner'))
@@ -33,13 +33,13 @@ def checkParameters(params)
             log.error 'Genome assembly not set. Use --assembly with the genome version, eg. "GRCh38".'
             errors = true
         }
-    
+
         if (errors)
         {
             log.warn "Missing arguments can also be added to alignment.config instead of being supplied on the command line."
             return false
         }
-        
+
         aligner = aligner.toLowerCase()
         assemblyPrefix = "${shortSpecies}.${assembly}"
 
@@ -59,7 +59,7 @@ def checkParameters(params)
                 referenceFasta = "${referenceRoot}/${species}/${assembly}/fasta/${assemblyPrefix}.fa"
             }
         }
-        
+
         if (createCoverage && !containsKey('genomeSizes'))
         {
             if (!containsKey('referenceRoot'))
@@ -133,7 +133,7 @@ def checkParameters(params)
                     }
                 }
                 break
-                
+
             case 'star':
                 if (!containsKey('starIndex'))
                 {
@@ -163,7 +163,7 @@ def checkParameters(params)
         {
             return false
         }
-        
+
         if (!Files.exists(file(referenceFasta)))
         {
             log.error "FASTQ reference file '${referenceFasta}' does not exist."
@@ -192,7 +192,7 @@ def checkParameters(params)
                     errors = true
                 }
                 break
-                
+
             case 'star':
                 if (!Files.isDirectory(file(starIndex)))
                 {
@@ -226,7 +226,7 @@ def displayParameters(params)
             case 'bwa_mem':
                 log.info "BWAmem index: ${bwamem2Index}"
                 break
-                
+
             case 'star':
                 log.info "STAR index: ${starIndex}"
                 break

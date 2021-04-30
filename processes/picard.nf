@@ -105,25 +105,25 @@ process picard_addreadgroups
 
         def rgdt = trimToNull(sequencingInfo['SequencingDate'])
         RGDT = !rgdt ? "" : "RGDT=\"${rgdt}\""
-        
+
         def rgid = trimToNull(sequencingInfo['ReadGroup'])
         RGID = !rgid ? "RGID=Z" : "RGID=\"${rgid}\""
-        
+
         def rglb = trimToNull(sequencingInfo['Library'])
         RGLB = !rglb ? "RGLB=Unknown" : "RGLB=\"${rglb}\""
-        
+
         def rgpl = trimToNull(sequencingInfo['SequencingPlatform'])
         RGPL = !rgpl ? "RGPL=Unknown" : "RGPL=\"${rgpl}\""
-        
+
         def rgpm = trimToNull(sequencingInfo['PlatformModel'])
         RGPM = !rgpm ? "" : "RGPM=\"${rgpm}\""
-        
+
         def rgpu = trimToNull(sequencingInfo['PlatformUnit'])
         RGPU = !rgpu ? /RGPU="Not available"/ : "RGPU=\"${rgpu}\""
-        
+
         def rgsm = trimToNull(sequencingInfo['SourceMaterial'])
         RGSM = !rgsm ? /RGSM="Not available"/ : "RGSM=\"${rgsm}\""
-        
+
         template "picard/AddReadGroups.sh"
 }
 

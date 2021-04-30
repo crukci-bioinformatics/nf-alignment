@@ -2,26 +2,6 @@ import nextflow.util.BlankSeparatedList
 
 include { extractChunkNumber } from '../components/functions'
 
-
-/*
- * Fastq Splitter.
- */
-
-def splitToPerChunkChannel(splitChannel)
-{
-    return splitChannel.flatMap
-    {
-        basename, read, chunks ->
-        if (chunks instanceof Collection)
-        {
-            return chunks.collect { tuple basename, extractChunkNumber(it), it }
-        }
-
-        assert chunks instanceof java.nio.file.Path : "chunks is not a Path for ${basename} read ${read}"
-        Collections.singletonList(tuple basename, extractChunkNumber(chunks), chunks)
-    }
-}
-
 /*
  * BWAmem.
  */

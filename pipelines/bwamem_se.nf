@@ -2,7 +2,7 @@ params.aligner = "bwamem"
 
 include { basenameExtractor } from "../components/functions"
 include { split_fastq } from "../processes/fastq"
-include { splitToPerChunkChannel; bwa_mem } from "../processes/bwamem"
+include { bwa_mem } from "../processes/bwamem"
 include { singleread } from "./singleread"
 
 workflow bwamem_se
@@ -21,12 +21,16 @@ workflow bwamem_se
 
         split_fastq(fastq_channel)
 
-        per_chunk_channel = splitToPerChunkChannel(split_fastq.out)
+        per_chunk_channel =
+            split_fastq.out
+            .transpose()
             .map
             {
-                basename, chunkNumber, fastq1 ->
-                tuple basename, [ fastq1 ]
+                basename, read, fastq ->
+                tuple basename, [ fastq ]
             }
+
+        per_chunk_channel.view()
 
         bwa_mem(per_chunk_channel)
         singleread(bwa_mem.out, csv_channel)
