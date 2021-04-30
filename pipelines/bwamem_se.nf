@@ -30,8 +30,6 @@ workflow bwamem_se
                 tuple basename, [ fastq ]
             }
 
-        per_chunk_channel.view()
-
         bwa_mem(per_chunk_channel)
         singleread(bwa_mem.out, csv_channel)
 }

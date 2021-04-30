@@ -23,8 +23,6 @@ workflow bwa_se
 
         per_chunk_channel = split_fastq.out.transpose()
 
-        per_chunk_channel.view()
-
         bwa_aln(per_chunk_channel) | bwa_samse
         singleread(bwa_samse.out, csv_channel)
 }
