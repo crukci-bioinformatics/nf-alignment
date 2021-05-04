@@ -111,6 +111,21 @@ _bedgraph_ and _bigwig_ files for each sample BAM file.
 Sample bam files are put into a directory `samplebam` in the project directory. The
 coverage files are also put into this directory alongside the BAM files.
 
+Additional metrics are available for the aligned files. The pipeline can be configured
+to provide alignment metrics, insert size metrics, RNA-seq metrics
+and whole genome sequencing (WGS) metrics. These are controlled by additional parameters
+in `alignment.config`.
+
+```
+    alignmentMetrics =  true | false   /* Default true  */
+    insertSizeMetrics = true | false   /* Default true  */
+    rnaseqMetrics =     true | false   /* Default false */
+    wgsMetrics =        true | false   /* Default false */
+```
+
+Insert size metrics are only relevant for paired end alignments, so when aligning
+single end the switch above has no effect: they will not be produced.
+
 #### Command Line Switches
 
 All of the parameters defined in `alignment.config` can be overridden on the command
@@ -158,9 +173,11 @@ One can set explicit parameters outside a standard structure for reference data:
 1. `referenceFasta`: The path to the reference FASTA file. Always needed.
 2. `genomeSizes`: The path to the file listing the sizes of the chromosomes and contigs
 in the reference. Only needed if creating coverage files.
-3. `bwaIndex`: The path and prefix to the BWA reference. Only needed when running classic BWA.
-4. `bwamem2Index`: The path and prefix to the BWAmem2 reference. Only needed when running BWAmem2.
-5. `starIndex`: The path to the STAR reference directory. Only needed when running STAR.
+3. 'referenceRefFlat': Annotations for the reference FASTA file in RefFlat format.
+Only needed if calculating RNA-seq metrics.
+4. `bwaIndex`: The path and prefix to the BWA reference. Only needed when running classic BWA.
+5. `bwamem2Index`: The path and prefix to the BWAmem2 reference. Only needed when running BWAmem2.
+6. `starIndex`: The path to the STAR reference directory. Only needed when running STAR.
 
 ### Singularity Cache
 

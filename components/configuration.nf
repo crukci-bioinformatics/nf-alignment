@@ -94,6 +94,23 @@ def checkParameters(params)
             }
         }
 
+        if (rnaseqMetrics && !containsKey('referenceRefFlat'))
+        {
+            if (!containsKey('referenceRoot'))
+            {
+                if (!referenceRootWarned)
+                {
+                    log.error referenceRootWarning
+                    referenceRootWarned = true
+                }
+                errors = true
+            }
+            else
+            {
+                referenceRefFlat = "${referenceRoot}/${species}/${assembly}/annotation/${assemblyPrefix}.txt"
+            }
+        }
+
         // Decipher single read or paired end and check the aligner is supported.
 
         switch (endType.toLowerCase()[0])
@@ -195,6 +212,11 @@ def checkParameters(params)
             log.error "Genome sizes file '${genomeSizes}' does not exist."
             errors = true
         }
+        if (rnaseqMetrics && !Files.exists(file(referenceRefFlat)))
+        {
+            log.error "Reference annotation refflat file '${referenceRefFlat}' does not exist."
+            errors = true
+        }
         switch (aligner)
         {
             case 'bwa':
@@ -240,6 +262,10 @@ def displayParameters(params)
         if (createCoverage)
         {
             log.info "Genome sizes: ${genomeSizes}"
+        }
+        if (rnaseqMetrics)
+        {
+            log.info "Reference annotations (refflat): ${referenceRefFlat}"
         }
         switch (aligner)
         {

@@ -215,6 +215,9 @@ process picard_alignmentmetrics
 
     publishDir params.bamDir, mode: "link"
 
+    when:
+        params.alignmentMetrics
+
     input:
         tuple val(basename), path(inBam), path(referenceFasta)
 
@@ -256,6 +259,31 @@ process picard_wgsmetrics
 }
 
 /*
+ * Calculate whole genome sequencing metrics with Picard's 'CollectRnaSeqMetrics'.
+ */
+process picard_rnaseqmetrics
+{
+    label "picard"
+
+    publishDir params.bamDir, mode: "link"
+
+    when:
+        params.rnaseqMetrics
+
+    input:
+        tuple val(basename), path(inBam), path(referenceFasta), path(referenceRefFlat)
+
+    output:
+        path metrics
+
+    shell:
+        metrics = "${alignedFileName(basename)}.rnaseq.txt"
+        javaMem = javaMemMB(task)
+
+        template "picard/CollectRnaSeqMetrics.sh"
+}
+
+/*
  * Calculate insert size metrics with Picard's 'CollectInsertSizeMetrics'.
  * This can only be used on paired end alignments.
  */
@@ -264,6 +292,9 @@ process picard_insertmetrics
     label "picard"
 
     publishDir params.bamDir, mode: "link"
+
+    when:
+        params.insertSizeMetrics
 
     input:
         tuple val(basename), path(inBam), path(referenceFasta)
@@ -341,6 +372,9 @@ process sample_alignmentmetrics
 
     publishDir params.sampleBamDir, mode: "link"
 
+    when:
+        params.alignmentMetrics
+
     input:
         tuple val(sampleName), path(inBam), path(referenceFasta)
 
@@ -383,6 +417,32 @@ process sample_wgsmetrics
 }
 
 /*
+ * Calculate whole genome sequencing metrics with Picard's 'CollectRnaSeqMetrics'
+ * for merged whole sample BAM files.
+ */
+process sample_rnaseqmetrics
+{
+    label "picard"
+
+    publishDir params.sampleBamDir, mode: "link"
+
+    when:
+        params.rnaseqMetrics
+
+    input:
+        tuple val(sampleName), path(inBam), path(referenceFasta), path(referenceRefFlat)
+
+    output:
+        path metrics
+
+    shell:
+        metrics = "${alignedFileName(sampleName)}.rnaseq.txt"
+        javaMem = javaMemMB(task)
+
+        template "picard/CollectRnaSeqMetrics.sh"
+}
+
+/*
  * Calculate insert size metrics with Picard's 'CollectInsertSizeMetrics'
  * for merged whole sample BAM files.
  * This can only be used on paired end alignments.
@@ -392,6 +452,9 @@ process sample_insertmetrics
     label "picard"
 
     publishDir params.sampleBamDir, mode: "link"
+
+    when:
+        params.insertSizeMetrics
 
     input:
         tuple val(sampleName), path(inBam), path(referenceFasta)

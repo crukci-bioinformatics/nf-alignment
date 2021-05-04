@@ -5,9 +5,9 @@
 
 include {
     picard_sortsam; picard_merge_or_markduplicates; picard_addreadgroups;
-    picard_alignmentmetrics; picard_wgsmetrics;
+    picard_alignmentmetrics; picard_wgsmetrics; picard_rnaseqmetrics;
     sample_merge_or_markduplicates;
-    sample_alignmentmetrics; sample_wgsmetrics
+    sample_alignmentmetrics; sample_wgsmetrics; sample_rnaseqmetrics
 } from "../processes/picard"
 
 include {
@@ -25,6 +25,7 @@ workflow singleread
     main:
         reference_fasta_channel = channel.fromPath(params.referenceFasta)
         genome_sizes_channel = params.genomeSizes ? channel.fromPath(params.genomeSizes) : channel.empty
+        reference_refflat_channel = params.referenceRefFlat ? channel.fromPath(params.referenceRefFlat) : channel.empty
 
         // Add sequencing info back to the channel for read groups.
         // It is available from sequencing_info_channel, the rows from the CSV file.
@@ -41,6 +42,7 @@ workflow singleread
 
         picard_alignmentmetrics(picard_with_reference)
         picard_wgsmetrics(picard_with_reference, true)
+        picard_rnaseqmetrics(picard_with_reference.combine(reference_refflat_channel))
 
         // Join the output of merge or mark duplicates with the sequencing info
         // by base name and map to the sample name and BAM files.
@@ -62,6 +64,7 @@ workflow singleread
 
         sample_alignmentmetrics(sample_with_reference)
         sample_wgsmetrics(sample_with_reference, true)
+        sample_rnaseqmetrics(sample_with_reference.combine(reference_refflat_channel))
 
         sample_with_sizes = sample_merge_or_markduplicates.out.sample_bam.combine(genome_sizes_channel)
 
