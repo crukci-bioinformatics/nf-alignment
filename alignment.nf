@@ -2,14 +2,16 @@
 
 nextflow.enable.dsl = 2
 
-include { checkParameters; displayParameters } from "./components/configuration"
+include { checkParameters; checkAlignmentCSV; displayParameters } from "./components/configuration"
 
 if (!checkParameters(params))
 {
     exit 1
 }
-
-displayParameters(params)
+if (!checkAlignmentCSV(params))
+{
+    exit 1
+}
 
 switch (params.aligner)
 {
@@ -51,12 +53,14 @@ switch (params.aligner)
         exit 1, "Aligner must be one of 'bwa', 'bwamem' or 'star'."
 }
 
+displayParameters(params)
+
+
 workflow
 {
-    csv_channel =
-        channel
-            .fromPath(params.alignmentCSV)
-            .splitCsv(header: true, quote: '"', strip: true)
+    csv_channel = channel
+        .fromPath(params.alignmentCSV)
+        .splitCsv(header: true, quote: '"', strip: true)
 
     alignment(csv_channel)
 }

@@ -1,4 +1,8 @@
+@Grab('org.apache.commons:commons-csv:1.8')
 import java.nio.file.Files
+import org.apache.commons.csv.*
+
+include { logException } from './debugging'
 
 def checkParameters(params)
 {
@@ -232,4 +236,70 @@ def displayParameters(params)
                 break
         }
     }
+}
+
+def checkAlignmentCSV(params)
+{
+    def ok = true
+    try
+    {
+        def driverFile = file(params.alignmentCSV)
+        driverFile.withReader('UTF-8')
+        {
+            stream ->
+            def parser = CSVParser.parse(stream, CSVFormat.DEFAULT.withHeader())
+            def first = true
+
+            for (record in parser)
+            {
+                if (first)
+                {
+                    if (!record.isMapped('Read1'))
+                    {
+                        log.error "${params.alignmentCSV} must contain a column 'Read1'."
+                        ok = false
+                    }
+                    if (params.pairedEnd && !record.isMapped('Read2'))
+                    {
+                        log.error "${params.alignmentCSV} must contain a column 'Read2' for aligning paired end."
+                        ok = false
+                    }
+                    if (params.mergeSamples && !record.isMapped('SampleName'))
+                    {
+                        log.error "${params.alignmentCSV} must contain a column 'SampleName' when sample merging is requested."
+                        ok = false
+                    }
+                    first = false
+                    if (!ok)
+                    {
+                        break
+                    }
+                }
+
+                def rowNum = parser.recordNumber + 1
+                if (!record.get('Read1'))
+                {
+                    log.error "No 'Read1' file name set on line ${rowNum}."
+                    ok = false
+                }
+                if (params.pairedEnd && !record.get('Read2'))
+                {
+                    log.error "No 'Read2' file name set on line ${rowNum}."
+                    ok = false
+                }
+                if (params.mergeSamples && !record.get('SampleName'))
+                {
+                    log.error "No 'SampleName' defined on line ${rowNum}."
+                    ok = false
+                }
+            }
+        }
+    }
+    catch (Exception e)
+    {
+        logException(e)
+        ok = false
+    }
+
+    return ok
 }
