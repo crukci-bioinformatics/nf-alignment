@@ -1,3 +1,7 @@
+/*
+ * STAR paired end pipeline inner work flow.
+ */
+
 params.aligner = "star"
 
 include { basenameExtractor } from "../components/functions"

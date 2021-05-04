@@ -1,11 +1,15 @@
+/*
+ * Processes for running BWA-mem.
+ */
+
 import nextflow.util.BlankSeparatedList
 
 include { extractChunkNumber } from '../components/functions'
 
 /*
- * BWAmem.
+ * Align with BWAmem (single read or paired end).
+ * Needs a list of one or two FASTQ files for alignment in each tuple.
  */
-
 process bwa_mem
 {
     cpus 4

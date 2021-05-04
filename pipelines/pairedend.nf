@@ -1,3 +1,8 @@
+/*
+ * Post alignment work flow for paired end alignment.
+ * The input to this work flow should be the aligned BAM files from the aligner work flow.
+ */
+
 include {
     picard_fixmate; picard_merge_or_markduplicates; picard_addreadgroups;
     picard_alignmentmetrics; picard_wgsmetrics; picard_insertmetrics;

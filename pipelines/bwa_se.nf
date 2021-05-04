@@ -1,3 +1,7 @@
+/*
+ * BWA single read inner work flow.
+ */
+
 params.aligner = "bwa"
 
 include { basenameExtractor } from "../components/functions"

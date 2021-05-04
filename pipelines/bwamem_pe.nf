@@ -1,3 +1,7 @@
+/*
+ * BWAmem paired end pipeline inner work flow.
+ */
+
 params.aligner = "bwamem"
 
 include { basenameExtractor; extractChunkNumber } from "../components/functions"

@@ -1,8 +1,14 @@
 #!/usr/bin/env nextflow
 
+/*
+ * Main alignment work flow.
+ */
+
 nextflow.enable.dsl = 2
 
 include { checkParameters; checkAlignmentCSV; displayParameters } from "./components/configuration"
+
+// Check all is well with the parameters and the alignment.csv file.
 
 if (!checkParameters(params))
 {
@@ -56,6 +62,9 @@ switch (params.aligner)
 displayParameters(params)
 
 
+/*
+ * Main work flow. For each line in alignment.csv, start aligning.
+ */
 workflow
 {
     csv_channel = channel

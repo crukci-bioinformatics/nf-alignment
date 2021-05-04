@@ -1,11 +1,15 @@
+/*
+ * Processes for running classic BWA.
+ */
+
 import nextflow.util.BlankSeparatedList
 
 include { extractChunkNumber } from '../components/functions'
 
-/*
- * Classic BWA.
- */
 
+/*
+ * Align a single fastq file.
+ */
 process bwa_aln
 {
     label 'bwa'
@@ -24,6 +28,9 @@ process bwa_aln
         template "bwa/bwaaln.sh"
 }
 
+/*
+ * Create BAM file for a BWA SAI file and its corresponding fastq file.
+ */
 process bwa_samse
 {
     label 'bwa'
@@ -40,6 +47,9 @@ process bwa_samse
         template "bwa/bwasamse.sh"
 }
 
+/*
+ * Create BAM file for a two pairs of BWA SAI file the corresponding fastq file.
+ */
 process bwa_sampe
 {
     label 'bwa'

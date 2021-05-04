@@ -1,3 +1,11 @@
+/*
+ * Picard tools.
+ */
+
+@Grab('org.apache.commons:commons-lang3:3.12.0')
+
+import static org.apache.commons.lang3.StringUtils.trimToNull
+
 include { alignedFileName } from '../components/functions'
 
 /**
@@ -73,19 +81,10 @@ def maxReadsInRam(availableMB, readLength)
     return totalReads as long
 }
 
-def trimToNull(str)
-{
-    if (str)
-    {
-        str = str.trim()
-        if (str.length() == 0)
-        {
-            str = null
-        }
-    }
-    return str
-}
-
+/*
+ * Run Picard's 'AddOrReplaceReadGroups' to add read group information to an aligned
+ * BAM file. Defaults are provided if the alignment.csv file is missing values.
+ */
 process picard_addreadgroups
 {
     label "picard"
@@ -127,6 +126,9 @@ process picard_addreadgroups
         template "picard/AddReadGroups.sh"
 }
 
+/*
+ * Sort a BAM file using Picard's 'SortSam' tool. Used for sorting single read files.
+ */
 process picard_sortsam
 {
     label "picard"
@@ -145,6 +147,10 @@ process picard_sortsam
         template "picard/SortSam.sh"
 }
 
+/*
+ * Sort a BAM file and fix mate pair information using Picard's
+ * 'FixMateInformation' tool. Used for sorting and fixing paired end files.
+ */
 process picard_fixmate
 {
     label "picard"
@@ -163,6 +169,11 @@ process picard_fixmate
         template "picard/FixMateInformation.sh"
 }
 
+/*
+ * Merge aligned BAM files that are chunks of the whole, optionally marking
+ * PCR duplicates. Uses Picard's 'MergeSamFiles' for simple merging and
+ * 'MarkDuplicates' for duplicate marking.
+ */
 process picard_merge_or_markduplicates
 {
     label "picard"
@@ -195,6 +206,9 @@ process picard_merge_or_markduplicates
         }
 }
 
+/*
+ * Calculate alignment metrics with Picard's 'CollectAlignmentSummaryMetrics'.
+ */
 process picard_alignmentmetrics
 {
     label "picard"
@@ -214,6 +228,10 @@ process picard_alignmentmetrics
         template "picard/CollectAlignmentSummaryMetrics.sh"
 }
 
+/*
+ * Calculate whole genome sequencing metrics with Picard's 'CollectWgsMetrics'.
+ * Note that this process can take a fair while.
+ */
 process picard_wgsmetrics
 {
     label "picard"
@@ -237,6 +255,10 @@ process picard_wgsmetrics
         template "picard/CollectWgsMetrics.sh"
 }
 
+/*
+ * Calculate insert size metrics with Picard's 'CollectInsertSizeMetrics'.
+ * This can only be used on paired end alignments.
+ */
 process picard_insertmetrics
 {
     label "picard"
@@ -257,6 +279,11 @@ process picard_insertmetrics
         template "picard/CollectInsertSizeMetrics.sh"
 }
 
+/*
+ * Merge aligned BAM files based on sample name, optionally marking
+ * PCR duplicates. Uses Picard's 'MergeSamFiles' for simple merging and
+ * 'MarkDuplicates' for duplicate marking.
+ */
 process sample_merge_or_markduplicates
 {
     label "picard"
@@ -304,6 +331,10 @@ process sample_merge_or_markduplicates
         }
 }
 
+/*
+ * Calculate alignment metrics with Picard's 'CollectAlignmentSummaryMetrics'
+ * for merged whole sample BAM files.
+ */
 process sample_alignmentmetrics
 {
     label "picard"
@@ -323,6 +354,11 @@ process sample_alignmentmetrics
         template "picard/CollectAlignmentSummaryMetrics.sh"
 }
 
+/*
+ * Calculate whole genome sequencing metrics with Picard's 'CollectWgsMetrics'
+ * for merged whole sample BAM files.
+ * Note that this process can take a fair while.
+ */
 process sample_wgsmetrics
 {
     label "picard"
@@ -346,6 +382,11 @@ process sample_wgsmetrics
         template "picard/CollectWgsMetrics.sh"
 }
 
+/*
+ * Calculate insert size metrics with Picard's 'CollectInsertSizeMetrics'
+ * for merged whole sample BAM files.
+ * This can only be used on paired end alignments.
+ */
 process sample_insertmetrics
 {
     label "picard"

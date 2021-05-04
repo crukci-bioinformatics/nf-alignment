@@ -1,5 +1,9 @@
 /*
- * Fastq Splitter.
+ * Generic FASTQ processes.
+ */
+
+/*
+ * Split FASTQ file into chunks.
  */
 process split_fastq
 {

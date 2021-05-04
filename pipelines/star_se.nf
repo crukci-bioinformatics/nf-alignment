@@ -1,3 +1,7 @@
+/*
+ * STAR single read inner work flow.
+ */
+
 params.aligner = "star"
 
 include { basenameExtractor } from "../components/functions"

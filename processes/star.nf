@@ -1,3 +1,10 @@
+/*
+ * Processes for running STAR.
+ */
+
+/*
+ * Align with STAR (single read or paired end).
+ */
 process STAR
 {
     cpus 8

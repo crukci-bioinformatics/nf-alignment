@@ -1,3 +1,7 @@
+/*
+ * BWA paired end pipeline inner work flow.
+ */
+
 params.aligner = "bwa"
 
 include { basenameExtractor } from "../components/functions"

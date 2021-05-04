@@ -1,3 +1,12 @@
+/*
+ * Functions to help pipeline development.
+ */
+
+/*
+ * Log an exception to the logger as an error, including the stack trace.
+ * Looks for InvocationTargetExceptions, which occur quite often, and logs
+ * the cause of that exception, not the wrapper exception.
+ */
 def logException(e)
 {
     def forLogging = e

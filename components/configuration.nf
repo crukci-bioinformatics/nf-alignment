@@ -1,9 +1,17 @@
+/*
+ * Functions used in checking the configuration of the pipeline before it starts.
+ */
+
 @Grab('org.apache.commons:commons-csv:1.8')
 import java.nio.file.Files
 import org.apache.commons.csv.*
 
 include { logException } from './debugging'
 
+/*
+ * Check the parameters from alignment.config and the command line are
+ * set and valid.
+ */
 def checkParameters(params)
 {
     def errors = false
@@ -12,6 +20,8 @@ def checkParameters(params)
 
     params.with
     {
+        // Basic settings
+
         if (!containsKey('aligner'))
         {
             log.error "Aligner not specified. Use --aligner with one of 'bwa', 'bwamem', 'star'."
@@ -47,6 +57,9 @@ def checkParameters(params)
         aligner = aligner.toLowerCase()
         assemblyPrefix = "${shortSpecies}.${assembly}"
 
+        // Check if reference files and directories are set. If not, default to our
+        // standard structure.
+
         if (!containsKey('referenceFasta'))
         {
             if (!containsKey('referenceRoot'))
@@ -80,6 +93,8 @@ def checkParameters(params)
                 genomeSizes = "${referenceRoot}/${species}/${assembly}/fasta/${assemblyPrefix}.sizes"
             }
         }
+
+        // Decipher single read or paired end and check the aligner is supported.
 
         switch (endType.toLowerCase()[0])
         {
@@ -168,6 +183,8 @@ def checkParameters(params)
             return false
         }
 
+        // Make sure required reference files are available.
+
         if (!Files.exists(file(referenceFasta)))
         {
             log.error "FASTQ reference file '${referenceFasta}' does not exist."
@@ -210,6 +227,10 @@ def checkParameters(params)
     return !errors
 }
 
+/*
+ * Write a log message summarising how the pipeline is configured and the
+ * locations of reference files that will be used.
+ */
 def displayParameters(params)
 {
     params.with
@@ -238,6 +259,11 @@ def displayParameters(params)
     }
 }
 
+/*
+ * Check the alignment CSV file has the necessary minimum columns to run
+ * in the configured mode and that each line in the file has those mandatory
+ * values set.
+ */
 def checkAlignmentCSV(params)
 {
     def ok = true
