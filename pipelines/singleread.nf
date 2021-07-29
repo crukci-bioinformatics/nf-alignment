@@ -24,8 +24,8 @@ workflow singleread
 
     main:
         reference_fasta_channel = channel.fromPath(params.referenceFasta)
-        genome_sizes_channel = params.genomeSizes ? channel.fromPath(params.genomeSizes) : channel.empty
-        reference_refflat_channel = params.referenceRefFlat ? channel.fromPath(params.referenceRefFlat) : channel.empty
+        genome_sizes_channel = params.containsKey('genomeSizes') ? channel.fromPath(params.genomeSizes) : channel.empty()
+        reference_refflat_channel = params.containsKey('referenceRefFlat') ? channel.fromPath(params.referenceRefFlat) : channel.empty()
 
         // Add sequencing info back to the channel for read groups.
         // It is available from sequencing_info_channel, the rows from the CSV file.
