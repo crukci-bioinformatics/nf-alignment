@@ -173,7 +173,7 @@ One can set explicit parameters outside a standard structure for reference data:
 1. `referenceFasta`: The path to the reference FASTA file. Always needed.
 2. `genomeSizes`: The path to the file listing the sizes of the chromosomes and contigs
 in the reference. Only needed if creating coverage files.
-3. 'referenceRefFlat': Annotations for the reference FASTA file in RefFlat format.
+3. `referenceRefFlat`: Annotations for the reference FASTA file in RefFlat format.
 Only needed if calculating RNA-seq metrics.
 4. `bwaIndex`: The path and prefix to the BWA reference. Only needed when running classic BWA.
 5. `bwamem2Index`: The path and prefix to the BWAmem2 reference. Only needed when running BWAmem2.
