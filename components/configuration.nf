@@ -57,77 +57,6 @@ def checkParameters(params)
         aligner = aligner.toLowerCase()
         assemblyPrefix = "${shortSpecies}.${assembly}"
 
-        // Check if reference files and directories are set. If not, default to our
-        // standard structure.
-
-        if (!containsKey('referenceFasta'))
-        {
-            if (!containsKey('referenceRoot'))
-            {
-                if (!referenceRootWarned)
-                {
-                    log.error referenceRootWarning
-                    referenceRootWarned = true
-                }
-                errors = true
-            }
-            else
-            {
-                referenceFasta = "${referenceRoot}/${species}/${assembly}/fasta/${assemblyPrefix}.fa"
-            }
-        }
-
-        if (createCoverage && !containsKey('genomeSizes'))
-        {
-            if (!containsKey('referenceRoot'))
-            {
-                if (!referenceRootWarned)
-                {
-                    log.error referenceRootWarning
-                    referenceRootWarned = true
-                }
-                errors = true
-            }
-            else
-            {
-                genomeSizes = "${referenceRoot}/${species}/${assembly}/fasta/${assemblyPrefix}.sizes"
-            }
-        }
-
-        if (rnaseqMetrics)
-        {
-            if (!containsKey('referenceRefFlat'))
-            {
-                if (!containsKey('referenceRoot'))
-                {
-                    if (!referenceRootWarned)
-                    {
-                        log.error referenceRootWarning
-                        referenceRootWarned = true
-                    }
-                    errors = true
-                }
-                else
-                {
-                    referenceRefFlat = "${referenceRoot}/${species}/${assembly}/annotation/${assemblyPrefix}.txt"
-                }
-            }
-
-            switch (rnaseqStrandSpecificity.toUpperCase())
-            {
-                // Acceptable values.
-                case 'NONE':
-                case 'FIRST_READ_TRANSCRIPTION_STRAND':
-                case 'SECOND_READ_TRANSCRIPTION_STRAND':
-                    break
-
-                default:
-                    log.error "RNA Seq strand specificity invalid [rnaseqStrandSpecificity]. " +
-                              "Must be one of NONE, FIRST_READ_TRANSCRIPTION_STRAND, SECOND_READ_TRANSCRIPTION_STRAND"
-                    errors = true
-            }
-        }
-
         // Decipher single read or paired end and check the aligner is supported.
 
         switch (endType.toLowerCase()[0])
@@ -210,6 +139,84 @@ def checkParameters(params)
                 log.error "Aligner must be one of 'bwa', 'bwamem' or 'star'."
                 errors = true
                 break
+        }
+
+        // Check if reference files and directories are set. If not, default to our
+        // standard structure.
+
+        if (!containsKey('referenceFasta'))
+        {
+            if (!containsKey('referenceRoot'))
+            {
+                if (!referenceRootWarned)
+                {
+                    log.error referenceRootWarning
+                    referenceRootWarned = true
+                }
+                errors = true
+            }
+            else
+            {
+                referenceFasta = "${referenceRoot}/${species}/${assembly}/fasta/${assemblyPrefix}.fa"
+            }
+        }
+
+        if (createCoverage && !containsKey('genomeSizes'))
+        {
+            if (!containsKey('referenceRoot'))
+            {
+                if (!referenceRootWarned)
+                {
+                    log.error referenceRootWarning
+                    referenceRootWarned = true
+                }
+                errors = true
+            }
+            else
+            {
+                genomeSizes = "${referenceRoot}/${species}/${assembly}/fasta/${assemblyPrefix}.sizes"
+            }
+        }
+
+        if (rnaseqMetrics)
+        {
+            if (!containsKey('referenceRefFlat'))
+            {
+                if (!containsKey('referenceRoot'))
+                {
+                    if (!referenceRootWarned)
+                    {
+                        log.error referenceRootWarning
+                        referenceRootWarned = true
+                    }
+                    errors = true
+                }
+                else
+                {
+                    referenceRefFlat = "${referenceRoot}/${species}/${assembly}/annotation/${assemblyPrefix}.txt"
+                }
+            }
+
+            rnaseqStrandSpecificity = rnaseqStrandSpecificity.toUpperCase()
+            
+            switch (rnaseqStrandSpecificity)
+            {
+                // None explicitly set. Will default according to paired end or single read.
+                case '':
+                    rnaseqStrandSpecificity = pairedEnd ? 'SECOND_READ_TRANSCRIPTION_STRAND' : 'FIRST_READ_TRANSCRIPTION_STRAND'
+                    break
+
+                // Acceptable values.
+                case 'NONE':
+                case 'FIRST_READ_TRANSCRIPTION_STRAND':
+                case 'SECOND_READ_TRANSCRIPTION_STRAND':
+                    break
+
+                default:
+                    log.error "RNA Seq strand specificity invalid [rnaseqStrandSpecificity]. " +
+                              "Must be one of NONE, FIRST_READ_TRANSCRIPTION_STRAND, SECOND_READ_TRANSCRIPTION_STRAND"
+                    errors = true
+            }
         }
 
         if (errors)
