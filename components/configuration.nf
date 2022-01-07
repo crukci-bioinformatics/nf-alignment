@@ -94,20 +94,37 @@ def checkParameters(params)
             }
         }
 
-        if (rnaseqMetrics && !containsKey('referenceRefFlat'))
+        if (rnaseqMetrics)
         {
-            if (!containsKey('referenceRoot'))
+            if (!containsKey('referenceRefFlat'))
             {
-                if (!referenceRootWarned)
+                if (!containsKey('referenceRoot'))
                 {
-                    log.error referenceRootWarning
-                    referenceRootWarned = true
+                    if (!referenceRootWarned)
+                    {
+                        log.error referenceRootWarning
+                        referenceRootWarned = true
+                    }
+                    errors = true
                 }
-                errors = true
+                else
+                {
+                    referenceRefFlat = "${referenceRoot}/${species}/${assembly}/annotation/${assemblyPrefix}.txt"
+                }
             }
-            else
+
+            switch (rnaseqStrandSpecificity.toUpperCase())
             {
-                referenceRefFlat = "${referenceRoot}/${species}/${assembly}/annotation/${assemblyPrefix}.txt"
+                // Acceptable values.
+                case 'NONE':
+                case 'FIRST_READ_TRANSCRIPTION_STRAND':
+                case 'SECOND_READ_TRANSCRIPTION_STRAND':
+                    break
+
+                default:
+                    log.error "RNA Seq strand specificity invalid [rnaseqStrandSpecificity]. " +
+                              "Must be one of NONE, FIRST_READ_TRANSCRIPTION_STRAND, SECOND_READ_TRANSCRIPTION_STRAND"
+                    errors = true
             }
         }
 
