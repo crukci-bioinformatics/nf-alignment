@@ -290,6 +290,7 @@ def displayParameters(params)
         if (rnaseqMetrics)
         {
             log.info "Reference annotations (refflat): ${referenceRefFlat}"
+            log.info "Strand specificity: ${rnaseqStrandSpecificity}"
         }
         switch (aligner)
         {
