@@ -32,3 +32,18 @@ def extractChunkNumber(f)
     assert m : "Don't have file pattern with chunk numbers: '${f.name}'"
     return m[0][1]
 }
+
+
+/*
+ * Function for getting RNA-Seq strand specificity. When there is nothing
+ * defined (the default), defaults to the appropriate value for single
+ * or paired end. When explicitly defined, return that.
+ */
+def rnaseqStrandSpecificity(params)
+{
+    if (params.rnaseqStrandSpecificity == '')
+    {
+        return params.pairedEnd ? 'SECOND_READ_TRANSCRIPTION_STRAND' : 'FIRST_READ_TRANSCRIPTION_STRAND'
+    }
+    return params.rnaseqStrandSpecificity.toUpperCase()
+}

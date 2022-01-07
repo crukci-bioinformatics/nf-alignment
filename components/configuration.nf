@@ -7,6 +7,7 @@ import java.nio.file.Files
 import org.apache.commons.csv.*
 
 include { logException } from './debugging'
+include { rnaseqStrandSpecificity } from './functions'
 
 /*
  * Check the parameters from alignment.config and the command line are
@@ -197,16 +198,11 @@ def checkParameters(params)
                 }
             }
 
-            rnaseqStrandSpecificity = rnaseqStrandSpecificity.toUpperCase()
-            
-            switch (rnaseqStrandSpecificity)
+            switch (rnaseqStrandSpecificity.toUpperCase())
             {
-                // None explicitly set. Will default according to paired end or single read.
+                // When none explicitly set, a default according to paired end or single read is supplied.
+                // Otherwise these are acceptable values.
                 case '':
-                    rnaseqStrandSpecificity = pairedEnd ? 'SECOND_READ_TRANSCRIPTION_STRAND' : 'FIRST_READ_TRANSCRIPTION_STRAND'
-                    break
-
-                // Acceptable values.
                 case 'NONE':
                 case 'FIRST_READ_TRANSCRIPTION_STRAND':
                 case 'SECOND_READ_TRANSCRIPTION_STRAND':
@@ -290,7 +286,7 @@ def displayParameters(params)
         if (rnaseqMetrics)
         {
             log.info "Reference annotations (refflat): ${referenceRefFlat}"
-            log.info "Strand specificity: ${rnaseqStrandSpecificity}"
+            log.info "Strand specificity: ${rnaseqStrandSpecificity(params)}"
         }
         switch (aligner)
         {

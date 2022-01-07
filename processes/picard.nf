@@ -6,7 +6,7 @@
 
 import static org.apache.commons.lang3.StringUtils.trimToNull
 
-include { alignedFileName } from '../components/functions'
+include { alignedFileName; rnaseqStrandSpecificity } from '../components/functions'
 
 /**
  * Give a number for the Java heap size based on the task memory, allowing for
@@ -438,6 +438,7 @@ process sample_rnaseqmetrics
     shell:
         metrics = "${alignedFileName(sampleName)}.rnaseq.txt"
         javaMem = javaMemMB(task)
+        strandSpecificity = rnaseqStrandSpecificity(params)
 
         template "picard/CollectRnaSeqMetrics.sh"
 }
