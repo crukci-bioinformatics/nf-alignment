@@ -47,8 +47,8 @@ INPUT="!{inBam}" \
 OUTPUT="!{metrics}" \
 REFERENCE_SEQUENCE="!{referenceFasta}" \
 REF_FLAT="!{referenceRefFlat}" \
+STRAND_SPECIFICITY=!{params.rnaseqStrandSpecificity} \
 ASSUME_SORTED=true \
-STRAND_SPECIFICITY=FIRST_READ_TRANSCRIPTION_STRAND \
 VALIDATION_STRINGENCY=SILENT \
 TMP_DIR="$TMPDIR"
 
