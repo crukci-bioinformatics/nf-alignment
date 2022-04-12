@@ -9,7 +9,7 @@ process split_fastq
 {
     cpus 1
     memory '8MB'
-    time { 1.hour + 1.hour * task.attempt }
+    time { 12.hour + 1.hour * task.attempt }
 
     input:
         tuple val(basename), val(read), path(fastqFile)
