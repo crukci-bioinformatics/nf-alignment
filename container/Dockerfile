@@ -1,15 +1,15 @@
-FROM    centos:8
+FROM    rockylinux:8.6
 
 LABEL   maintainer="Richard Bowers<richard.bowers@cruk.cam.ac.uk>"
 
 ARG INSTALL_DIR=/opt
 ARG BUILD_DIR=/var/tmp/alignment_software_build
 
-ARG BEDTOOLS=2.29.2
+ARG BEDTOOLS=2.30.0
 ARG BWA=0.7.17
-ARG BWAMEM=2.1
-ARG PICARD=2.25.1
-ARG SAMTOOLS=1.11
+ARG BWAMEM=2.2.1
+ARG PICARD=2.27.3
+ARG SAMTOOLS=1.15.1
 ARG STAR=2.7.7a
 
 ARG TAROPTS="--no-same-owner --no-same-permissions"

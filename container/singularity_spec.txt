@@ -1,6 +1,6 @@
 Bootstrap: docker
 
-From: centos:8
+From: rockylinux:8.6
 
 %environment
 
