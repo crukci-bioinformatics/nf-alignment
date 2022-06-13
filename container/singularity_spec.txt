@@ -14,11 +14,11 @@ export PATH=$JAVA_HOME/bin:$PATH
 INSTALL_DIR=/opt
 BUILD_DIR=/var/tmp/alignment_software_build
 
-BEDTOOLS=2.29.2
+BEDTOOLS=2.30.0
 BWA=0.7.17
-BWAMEM=2.1
-PICARD=2.25.1
-SAMTOOLS=1.11
+BWAMEM=2.2.1
+PICARD=2.27.3
+SAMTOOLS=1.15.1
 STAR=2.7.7a
 
 TAROPTS="--no-same-owner --no-same-permissions"
