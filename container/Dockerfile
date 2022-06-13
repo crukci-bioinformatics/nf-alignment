@@ -1,4 +1,4 @@
-FROM    rockylinux:8.6
+FROM    rockylinux:8.5
 
 LABEL   maintainer="Richard Bowers<richard.bowers@cruk.cam.ac.uk>"
 
