@@ -11,6 +11,6 @@ fi
 
 spython recipe Dockerfile > singularity_spec.txt
 
-sudo singularity build alignment40.2.sif singularity_spec.txt
-chmod a-x alignment40.2.sif
+sudo singularity build alignment-4.0.2.sif singularity_spec.txt
+chmod a-x alignment-4.0.2.sif
 
