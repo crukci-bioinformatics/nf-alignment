@@ -6,7 +6,7 @@
 
 import static org.apache.commons.lang3.StringUtils.trimToNull
 
-include { alignedFileName; rnaseqStrandSpecificity } from '../components/functions'
+include { alignedFileName; safeName; rnaseqStrandSpecificity } from '../components/functions'
 
 /**
  * Give a number for the Java heap size based on the task memory, allowing for
@@ -334,9 +334,10 @@ process sample_merge_or_markduplicates
         path metrics optional true
 
     shell:
-        outBam = "${alignedFileName(sampleName)}.bam"
-        outIndex = "${alignedFileName(sampleName)}.bai"
-        metrics = "${alignedFileName(sampleName)}.duplication.txt"
+        safeSampleName = safeName(sampleName)
+        outBam = "${alignedFileName(safeSampleName)}.bam"
+        outIndex = "${alignedFileName(safeSampleName)}.bai"
+        metrics = "${alignedFileName(safeSampleName)}.duplication.txt"
         javaMem = javaMemMB(task)
         readsInRam = maxReadsInRam(javaMem, 100)
 
@@ -383,7 +384,8 @@ process sample_alignmentmetrics
         path metrics
 
     shell:
-        metrics = "${alignedFileName(sampleName)}.alignment.txt"
+        safeSampleName = safeName(sampleName)
+        metrics = "${alignedFileName(safeSampleName)}.alignment.txt"
         javaMem = javaMemMB(task)
 
         template "picard/CollectAlignmentSummaryMetrics.sh"
@@ -411,7 +413,8 @@ process sample_wgsmetrics
         path metrics
 
     shell:
-        metrics = "${alignedFileName(sampleName)}.wgs.txt"
+        safeSampleName = safeName(sampleName)
+        metrics = "${alignedFileName(safeSampleName)}.wgs.txt"
         javaMem = javaMemMB(task)
 
         template "picard/CollectWgsMetrics.sh"
@@ -437,7 +440,8 @@ process sample_rnaseqmetrics
         path metrics
 
     shell:
-        metrics = "${alignedFileName(sampleName)}.rnaseq.txt"
+        safeSampleName = safeName(sampleName)
+        metrics = "${alignedFileName(safeSampleName)}.rnaseq.txt"
         javaMem = javaMemMB(task)
         strandSpecificity = rnaseqStrandSpecificity(params)
 
@@ -465,8 +469,9 @@ process sample_insertmetrics
         path metrics optional true
 
     shell:
-        metrics = "${alignedFileName(sampleName)}.insertsize.txt"
-        plot = "${alignedFileName(sampleName)}.insertsize.pdf"
+        safeSampleName = safeName(sampleName)
+        metrics = "${alignedFileName(safeSampleName)}.insertsize.txt"
+        plot = "${alignedFileName(safeSampleName)}.insertsize.pdf"
         javaMem = javaMemMB(task)
 
         template "picard/CollectInsertSizeMetrics.sh"

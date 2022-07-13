@@ -28,6 +28,23 @@ workflow bwamem_se
 
         split_fastq(fastq_channel)
 
+        // Get the number of chunks for each base id.
+        // See https://groups.google.com/g/nextflow/c/fScdmB_w_Yw and
+        // https://github.com/danielecook/TIL/blob/master/Nextflow/groupKey.md
+
+        chunk_count_channel =
+            split_fastq.out
+            .map
+            {
+                basename, read, fastqFiles ->
+                // Fastq files can be a single path or it can be a list of paths.
+                // Ideally, Nextflow would always return a list, even of length 1.
+                // See https://github.com/nextflow-io/nextflow/issues/2425
+                fastqFiles instanceof Collection
+                    ? tuple(basename, fastqFiles.size())
+                    : tuple(basename, 1)
+            }
+
         per_chunk_channel =
             split_fastq.out
             .transpose()
@@ -39,5 +56,5 @@ workflow bwamem_se
             .combine(bwamem2_index_channel)
 
         bwa_mem(per_chunk_channel)
-        singleread(bwa_mem.out, csv_channel)
+        singleread(bwa_mem.out, csv_channel, chunk_count_channel)
 }

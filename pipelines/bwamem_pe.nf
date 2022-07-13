@@ -48,6 +48,23 @@ workflow bwamem_pe
         split_fastq_1(read1_channel)
         split_fastq_2(read2_channel)
 
+        // Get the number of chunks for each base id (same for both channels).
+        // See https://groups.google.com/g/nextflow/c/fScdmB_w_Yw and
+        // https://github.com/danielecook/TIL/blob/master/Nextflow/groupKey.md
+
+        chunk_count_channel =
+            split_fastq_1.out
+            .map
+            {
+                basename, read, fastqFiles ->
+                // Fastq files can be a single path or it can be a list of paths.
+                // Ideally, Nextflow would always return a list, even of length 1.
+                // See https://github.com/nextflow-io/nextflow/issues/2425
+                fastqFiles instanceof Collection
+                    ? tuple(basename, fastqFiles.size())
+                    : tuple(basename, 1)
+            }
+
         // Flatten the list of files in both channels to have two channels with
         // a single file per item. Also extract the chunk number from the file name.
 
@@ -82,5 +99,5 @@ workflow bwamem_pe
             .combine(bwamem2_index_channel)
 
         bwa_mem(combined_chunk_channel)
-        pairedend(bwa_mem.out, csv_channel)
+        pairedend(bwa_mem.out, csv_channel, chunk_count_channel)
 }

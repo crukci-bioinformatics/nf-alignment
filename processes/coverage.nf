@@ -2,7 +2,7 @@
  * Processes for calculating genome coverage.
  */
 
-include { alignedFileName } from "../components/functions"
+include { alignedFileName; safeName } from "../components/functions"
 
 /*
  * Run UCSC 'genomeCoverageBed' tool to calculate coverage from a BAM file.
@@ -24,7 +24,8 @@ process sample_genomecoverage
         tuple val(sampleName), path(bedgraph), path(genomeSizes)
 
     shell:
-        bedgraph = "${alignedFileName(sampleName)}.bedgraph"
+        safeSampleName = safeName(sampleName)
+        bedgraph = "${alignedFileName(safeSampleName)}.bedgraph"
         template "ucsc/genomeCoverageBed.sh"
 }
 
@@ -42,7 +43,8 @@ process sample_bedsort
         tuple val(sampleName), path(sortedBed), path(genomeSizes)
 
     shell:
-        sortedBed = "${alignedFileName(sampleName)}.sorted.bed"
+        safeSampleName = safeName(sampleName)
+        sortedBed = "${alignedFileName(safeSampleName)}.sorted.bed"
         template "bedtools/bedSort.sh"
 }
 
@@ -62,6 +64,7 @@ process sample_bedgraphtobigwig
         tuple val(sampleName), path(bigwig)
 
     shell:
-        bigwig = "${alignedFileName(sampleName)}.bigwig"
+        safeSampleName = safeName(sampleName)
+        bigwig = "${alignedFileName(safeSampleName)}.bigwig"
         template "ucsc/bedGraphToBigWig.sh"
 }

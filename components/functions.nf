@@ -2,6 +2,8 @@
  * Miscellaneous helper functions used all over the pipeline.
  */
 
+import java.text.*
+
 /*
  * Get the base name from a file name, using the extract pattern and capture
  * group set in the parameters.
@@ -31,6 +33,36 @@ def extractChunkNumber(f)
     def m = f.name =~ /.+-S(\d{6})\.fq(\.gz)?$/
     assert m : "Don't have file pattern with chunk numbers: '${f.name}'"
     return m[0][1]
+}
+
+/*
+ * Make a name safe to be used as a file name. Everything that's not
+ * alphanumeric, dot or underscore is converted to an underscore.
+ */
+def safeName(name)
+{
+    name = name.toString()
+    def safe = new StringBuilder(name.length())
+    def iter = new StringCharacterIterator(name)
+    def c
+
+    while ((c = iter.next()) != CharacterIterator.DONE)
+    {
+        switch (c)
+        {
+            case { Character.isLetterOrDigit(it) }:
+            case '_':
+            case '.':
+                safe << c
+                break
+
+            default:
+                safe << '_'
+                break
+        }
+    }
+
+    return safe.toString()
 }
 
 

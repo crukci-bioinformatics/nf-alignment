@@ -25,6 +25,16 @@ workflow star_pe
             }
             .combine(star_index_channel)
 
+        // STAR doesn't do chunking, so for every base name there is always one chunk.
+
+        chunk_count_channel =
+            fastq_channel
+            .map
+            {
+                basename, files, index ->
+                tuple basename, 1
+            }
+
         STAR(fastq_channel)
-        pairedend(STAR.out, csv_channel)
+        pairedend(STAR.out, csv_channel, chunk_count_channel)
 }

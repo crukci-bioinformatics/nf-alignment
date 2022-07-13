@@ -21,6 +21,7 @@ workflow singleread
     take:
         alignment_channel
         sequencing_info_channel
+        chunk_count_channel
 
     main:
         reference_fasta_channel = channel.fromPath(params.referenceFasta)
@@ -35,8 +36,21 @@ workflow singleread
 
         picard_addreadgroups(read_groups_channel) | picard_sortsam
 
+        // Group the outputs by base name. Use the groupKey function to
+        // allow things to run when each group is complete, rather than
+        // waiting for everything.
+
+        merge_channel =
+            picard_sortsam.out
+            .combine(chunk_count_channel, by: 0)
+            .map {
+                basename, bamFile, chunkCount ->
+                tuple groupKey(basename, chunkCount), bamFile
+            }
+            .groupTuple()
+
         // Group the outputs by base name.
-        picard_merge_or_markduplicates(picard_sortsam.out.groupTuple())
+        picard_merge_or_markduplicates(merge_channel)
 
         picard_with_reference = picard_merge_or_markduplicates.out.merged_bam.combine(reference_fasta_channel)
 
@@ -56,9 +70,29 @@ workflow singleread
                 basename, bam, sequencingInfo ->
                 tuple sequencingInfo.SampleName, bam
             }
+
+        // Get the number of files for each sample and provide a groupKey for merging
+        // so it can start each group once all the files are received.
+
+        sample_count_channel =
+            sequencing_info_channel
+            .map { tuple it.SampleName, it.Read1 }
+            .groupTuple()
+            .map {
+                sampleName, readFiles ->
+                tuple sampleName, readFiles.size()
+            }
+
+        sample_merge_channel =
+            by_sample_channel
+            .combine(sample_count_channel, by: 0)
+            .map {
+                sampleName, bam, filesPerSample ->
+                tuple groupKey(sampleName, filesPerSample), bam
+            }
             .groupTuple()
 
-        sample_merge_or_markduplicates(by_sample_channel)
+        sample_merge_or_markduplicates(sample_merge_channel)
 
         sample_with_reference = sample_merge_or_markduplicates.out.sample_bam.combine(reference_fasta_channel)
 

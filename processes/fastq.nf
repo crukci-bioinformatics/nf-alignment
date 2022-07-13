@@ -18,7 +18,5 @@ process split_fastq
         tuple val(basename), val(read), path("*-S??????.fq.gz")
 
     shell:
-        """
-        splitfastq -n !{params.chunkSize} -p "!{basename}.r_!{read}" "!{fastqFile}"
-        """
+        template "fastq/split_fastq.sh"
 }
