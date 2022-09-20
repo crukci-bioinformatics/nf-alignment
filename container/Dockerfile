@@ -1,4 +1,4 @@
-FROM    rockylinux:8.5
+FROM    rockylinux:8.6
 
 LABEL   maintainer="Richard Bowers<richard.bowers@cruk.cam.ac.uk>"
 
@@ -16,6 +16,7 @@ ARG TAROPTS="--no-same-owner --no-same-permissions"
 
 ENV JAVA_HOME=/usr/lib/jvm/jre-11
 ENV PATH=$JAVA_HOME/bin:$PATH
+ENV LD_LIBRARY_PATH=${INSTALL_DIR}/htslib-${SAMTOOLS}/lib
 
 RUN dnf install -y dnf-plugins-core epel-release
 RUN dnf config-manager --set-enabled powertools
@@ -34,12 +35,21 @@ RUN cd ${BUILD_DIR}; \
     cd ${BUILD_DIR}/fastq_splitter; \
     gcc -o /usr/local/bin/splitfastq fastq_splitter.c -lz
 
+# htslib (separate build to include bgzip and tabix)
+RUN cd ${BUILD_DIR}; \
+    wget https://github.com/samtools/htslib/releases/download/${SAMTOOLS}/htslib-${SAMTOOLS}.tar.bz2 && \
+    tar ${TAROPTS} -jxf htslib-${SAMTOOLS}.tar.bz2
+RUN cd ${BUILD_DIR}/htslib-${SAMTOOLS}; \
+	./configure --prefix="${INSTALL_DIR}/htslib-${SAMTOOLS}" && \
+	make && \
+	make install
+
 # samtools
 RUN cd ${BUILD_DIR}; \
     wget https://github.com/samtools/samtools/releases/download/${SAMTOOLS}/samtools-${SAMTOOLS}.tar.bz2 && \
     tar ${TAROPTS} -jxf samtools-${SAMTOOLS}.tar.bz2
 RUN cd ${BUILD_DIR}/samtools-${SAMTOOLS}; \
-    ./configure --prefix="${INSTALL_DIR}/samtools-${SAMTOOLS}" && \
+    ./configure --prefix="${INSTALL_DIR}/samtools-${SAMTOOLS}" --with-htslib="${INSTALL_DIR}/htslib-${SAMTOOLS}" && \
     make && \
     make install
 

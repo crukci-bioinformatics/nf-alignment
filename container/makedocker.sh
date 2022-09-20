@@ -1,4 +1,7 @@
 #!/bin/sh
 
-sudo docker build --tag "crukcibioinformatics/alignment:4.0.2" --file Dockerfile .
-sudo docker push crukcibioinformatics/alignment:4.0.2
+TAG="4.0.4"
+REPO="crukcibioinformatics/alignment:$TAG"
+
+sudo docker build --tag "$REPO" --file Dockerfile .
+sudo docker push "$REPO"
