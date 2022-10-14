@@ -7,7 +7,6 @@
  */
 process split_fastq
 {
-    cpus 1
     memory '8MB'
     time { 12.hour + 1.hour * task.attempt }
 
