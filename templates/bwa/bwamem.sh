@@ -4,7 +4,7 @@ set -o pipefail
 
 !{params.bwamem2} \
     mem \
-    -t !{Math.max(1, task.cpus - 1)} \
+    -t !{task.cpus} \
     "!{bwamem2IndexDir}/!{bwamem2IndexPrefix}" \
     !{sequenceFiles} | \
 !{params.samtools} \
