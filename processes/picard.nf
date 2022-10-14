@@ -155,6 +155,8 @@ process picard_fixmate
 {
     label "picard"
 
+    cpus 2
+
     input:
         tuple val(basename), val(chunk), path(inBam)
 
