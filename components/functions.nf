@@ -44,14 +44,15 @@ def safeName(name)
     name = name.toString()
     def safe = new StringBuilder(name.length())
     def iter = new StringCharacterIterator(name)
-    def c
+    def c = iter.first()
 
-    while ((c = iter.next()) != CharacterIterator.DONE)
+    do
     {
         switch (c)
         {
             case { Character.isLetterOrDigit(it) }:
             case '_':
+            case '-':
             case '.':
                 safe << c
                 break
@@ -61,6 +62,7 @@ def safeName(name)
                 break
         }
     }
+    while ((c = iter.next()) != CharacterIterator.DONE)
 
     return safe.toString()
 }
