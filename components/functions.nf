@@ -44,9 +44,8 @@ def safeName(name)
     name = name.toString()
     def safe = new StringBuilder(name.length())
     def iter = new StringCharacterIterator(name)
-    def c = iter.first()
 
-    while (c != CharacterIterator.DONE)
+    for (c = iter.first(); c != CharacterIterator.DONE; c = iter.next())
     {
         switch (c)
         {
@@ -61,7 +60,6 @@ def safeName(name)
                 safe << '_'
                 break
         }
-        c = iter.next()
     }
 
     return safe.toString()
