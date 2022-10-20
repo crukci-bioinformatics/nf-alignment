@@ -18,6 +18,15 @@ def javaMemMB(task)
 }
 
 /**
+ * Get the size of a collection of things. It might be that the thing
+ * passed in isn't a collection, in which case the size is 1.
+ */
+def sizeOf(thing)
+{
+    return thing instanceof Collection ? thing.size() : 1
+}
+
+/**
  * Calculate the maximum number of reads to hold in RAM for Picard sorting
  * tasks based on memory allocated to the task and the read length.
  */
@@ -214,6 +223,7 @@ process picard_merge_or_markduplicates
 process picard_alignmentmetrics
 {
     label "picard"
+    label "metrics"
 
     publishDir params.bamDir, mode: "link"
 
@@ -240,6 +250,7 @@ process picard_alignmentmetrics
 process picard_wgsmetrics
 {
     label "picard"
+    label "metrics"
 
     publishDir params.bamDir, mode: "link"
 
@@ -266,6 +277,7 @@ process picard_wgsmetrics
 process picard_rnaseqmetrics
 {
     label "picard"
+    label "metrics"
 
     publishDir params.bamDir, mode: "link"
 
@@ -293,6 +305,7 @@ process picard_rnaseqmetrics
 process picard_insertmetrics
 {
     label "picard"
+    label "metrics"
 
     publishDir params.bamDir, mode: "link"
 
@@ -349,11 +362,7 @@ process sample_merge_or_markduplicates
         }
         else
         {
-            // Sometimes inBams is a single path, others it is a collections of paths.
-            // Detect if it is a type of collection, and if so, use its size.
-            def numberOfBams = inBams instanceof Collection ? inBams.size() : 1
-
-            if (numberOfBams == 1)
+            if (sizeOf(inBams) == 1)
             {
                 // When "inBams" is exactly one, there is no need to run the single file
                 // through merge. It can just be linked to.
@@ -373,6 +382,7 @@ process sample_merge_or_markduplicates
 process sample_alignmentmetrics
 {
     label "picard"
+    label "metrics"
 
     publishDir params.sampleBamDir, mode: "link"
 
@@ -401,6 +411,7 @@ process sample_alignmentmetrics
 process sample_wgsmetrics
 {
     label "picard"
+    label "metrics"
 
     publishDir params.sampleBamDir, mode: "link"
 
@@ -429,6 +440,7 @@ process sample_wgsmetrics
 process sample_rnaseqmetrics
 {
     label "picard"
+    label "metrics"
 
     publishDir params.sampleBamDir, mode: "link"
 
@@ -458,6 +470,7 @@ process sample_rnaseqmetrics
 process sample_insertmetrics
 {
     label "picard"
+    label "metrics"
 
     publishDir params.sampleBamDir, mode: "link"
 

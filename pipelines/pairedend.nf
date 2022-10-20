@@ -44,8 +44,8 @@ workflow pairedend
             picard_fixmate.out
             .combine(chunk_count_channel, by: 0)
             .map {
-                basename, bamFile, chunkCount ->
-                tuple groupKey(basename, chunkCount), bamFile
+                basename, bam, chunkCount ->
+                tuple groupKey(basename, chunkCount), bam
             }
             .groupTuple()
 
