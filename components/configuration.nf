@@ -278,7 +278,8 @@ def displayParameters(params)
     params.with
     {
         log.info "${pairedEnd ? 'Paired end' : 'Single read'} alignment against ${species} ${assembly} using ${aligner.toUpperCase()}."
-        log.info "FASTQ file: ${referenceFasta}"
+        log.info "FASTQ directory: ${fastqDir}"
+        log.info "FASTA file: ${referenceFasta}"
         if (createCoverage)
         {
             log.info "Genome sizes: ${genomeSizes}"

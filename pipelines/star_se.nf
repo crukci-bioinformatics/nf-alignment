@@ -21,7 +21,8 @@ workflow star_se
             .map
             {
                 row ->
-                tuple basenameExtractor(row.Read1), file("${params.fastqDir}/${row.Read1}")
+                tuple basenameExtractor(row.Read1),
+                      file("${params.fastqDir}/${row.Read1}", checkIfExists: true)
             }
             .combine(star_index_channel)
 
