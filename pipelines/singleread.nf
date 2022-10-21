@@ -10,6 +10,8 @@ include {
     sample_alignmentmetrics; sample_wgsmetrics; sample_rnaseqmetrics
 } from "../processes/picard"
 
+include { make_safe_for_merging } from "../processes/premerging"
+
 include {
     sample_genomecoverage; sample_bedsort; sample_bedgraphtobigwig
 } from "../processes/coverage"
@@ -58,10 +60,12 @@ workflow singleread
         picard_wgsmetrics(picard_with_reference, true)
         picard_rnaseqmetrics(picard_with_reference.combine(reference_refflat_channel))
 
+        make_safe_for_merging(picard_merge_or_markduplicates.out.merged_bam)
+
         // Join the output of merge or mark duplicates with the sequencing info
         // by base name and map to the sample name and BAM files.
         by_sample_channel =
-            picard_merge_or_markduplicates.out.merged_bam
+            make_safe_for_merging.out
             .join(
                 sequencing_info_channel.map { tuple basenameExtractor(it.Read1), it },
                 failOnDuplicate: true, failOnMismatch: true
