@@ -6,7 +6,7 @@
 
 import static org.apache.commons.lang3.StringUtils.trimToNull
 
-include { alignedFileName; safeName; rnaseqStrandSpecificity } from '../components/functions'
+include { alignedFileName; safeName; sizeOf; rnaseqStrandSpecificity } from '../components/functions'
 
 /**
  * Give a number for the Java heap size based on the task memory, allowing for
@@ -15,15 +15,6 @@ include { alignedFileName; safeName; rnaseqStrandSpecificity } from '../componen
 def javaMemMB(task)
 {
     return task.memory.toMega() - 128
-}
-
-/**
- * Get the size of a collection of things. It might be that the thing
- * passed in isn't a collection, in which case the size is 1.
- */
-def sizeOf(thing)
-{
-    return thing instanceof Collection ? thing.size() : 1
 }
 
 /**

@@ -65,6 +65,16 @@ def safeName(name)
     return safe.toString()
 }
 
+/*
+ * Get the size of a collection of things. It might be that the thing
+ * passed in isn't a collection or map, in which case the size is 1.
+ *
+ * See https://github.com/nextflow-io/nextflow/issues/2425
+ */
+def sizeOf(thing)
+{
+    return (thing instanceof Collection || thing instanceof Map) ? thing.size() : 1
+}
 
 /*
  * Function for getting RNA-Seq strand specificity. When there is nothing

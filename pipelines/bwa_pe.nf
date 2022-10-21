@@ -4,7 +4,7 @@
 
 params.aligner = "bwa"
 
-include { basenameExtractor } from "../components/functions"
+include { basenameExtractor; sizeOf } from "../components/functions"
 include { split_fastq as split_fastq_1; split_fastq as split_fastq_2 } from "../processes/fastq"
 include { bwa_aln as bwa_aln_1; bwa_aln as bwa_aln_2; bwa_sampe } from "../processes/bwa"
 include { pairedend } from "./pairedend"
@@ -60,12 +60,7 @@ workflow bwa_pe
             .map
             {
                 basename, read, fastqFiles ->
-                // Fastq files can be a single path or it can be a list of paths.
-                // Ideally, Nextflow would always return a list, even of length 1.
-                // See https://github.com/nextflow-io/nextflow/issues/2425
-                fastqFiles instanceof Collection
-                    ? tuple(basename, fastqFiles.size())
-                    : tuple(basename, 1)
+                tuple basename, sizeOf(fastqFiles)
             }
 
         // Map these channels so there is a single FASTQ per item in the channel
