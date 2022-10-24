@@ -2,6 +2,10 @@
  * Miscellaneous helper functions used all over the pipeline.
  */
 
+@Grab('org.apache.commons:commons-lang3:3.12.0')
+
+import static org.apache.commons.lang3.CharUtils.isAsciiAlphanumeric
+
 import java.text.*
 
 /*
@@ -37,19 +41,19 @@ def extractChunkNumber(f)
 
 /*
  * Make a name safe to be used as a file name. Everything that's not
- * alphanumeric, dot or underscore is converted to an underscore.
+ * alphanumeric, dot, underscore or hyphen is converted to an underscore.
  */
 def safeName(name)
 {
-    name = name.toString()
-    def safe = new StringBuilder(name.length())
-    def iter = new StringCharacterIterator(name)
+    def nameStr = name.toString()
+    def safe = new StringBuilder(nameStr.length())
+    def iter = new StringCharacterIterator(nameStr)
 
-    for (c = iter.first(); c != CharacterIterator.DONE; c = iter.next())
+    for (def c = iter.first(); c != CharacterIterator.DONE; c = iter.next())
     {
         switch (c)
         {
-            case { Character.isLetterOrDigit(it) }:
+            case { isAsciiAlphanumeric(it) }:
             case '_':
             case '-':
             case '.':
