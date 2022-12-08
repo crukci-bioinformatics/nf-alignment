@@ -16,10 +16,10 @@ process make_safe_for_merging
         params.mergeSamples
 
     input:
-        tuple val(basename), path(inBam)
+        tuple val(basename), path(inBam), val(sequencingInfo)
 
     output:
-        tuple val(basename), path(outBam)
+        tuple val(basename), path(outBam), val(sequencingInfo)
 
     shell:
         outBam = "${alignedFileName(basename)}.forsamplemerging.bam"
