@@ -60,7 +60,14 @@ workflow pairedend
         picard_rnaseqmetrics(picard_with_reference.combine(reference_refflat_channel))
         picard_insertmetrics(picard_with_reference)
 
-        make_safe_for_merging(picard_merge_or_markduplicates.out.merged_bam)
+        sampleMergingChannel = picard_merge_or_markduplicates.out.merged_bam
+            .filter
+            {
+                basename, bam ->
+                params.mergeSamples
+            }
+
+        make_safe_for_merging(sampleMergingChannel)
 
         // Join the output of merge or mark duplicates with the sequencing info
         // by base name and map to the sample name and BAM files.
