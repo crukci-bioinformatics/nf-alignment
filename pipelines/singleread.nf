@@ -44,7 +44,7 @@ workflow singleread
 
         merge_channel =
             picard_sortsam.out
-            .combine(chunk_count_channel, by: 0)
+            .join(chunk_count_channel)
             .map {
                 basename, bam, chunkCount ->
                 tuple groupKey(basename, chunkCount), bam
@@ -60,14 +60,7 @@ workflow singleread
         picard_wgsmetrics(picard_with_reference, true)
         picard_rnaseqmetrics(picard_with_reference.combine(reference_refflat_channel))
 
-        sampleMergingChannel = picard_merge_or_markduplicates.out.merged_bam
-            .filter
-            {
-                basename, bam ->
-                params.mergeSamples
-            }
-
-        make_safe_for_merging(sampleMergingChannel)
+        make_safe_for_merging(picard_merge_or_markduplicates.out.merged_bam)
 
         // Join the output of merge or mark duplicates with the sequencing info
         // by base name and map to the sample name and BAM files.
@@ -75,7 +68,7 @@ workflow singleread
             make_safe_for_merging.out
             .join(
                 sequencing_info_channel.map { tuple basenameExtractor(it.Read1), it },
-                failOnDuplicate: true, failOnMismatch: true
+                failOnDuplicate: true, failOnMismatch: false
             )
             .map {
                 basename, bam, sequencingInfo ->
@@ -96,7 +89,7 @@ workflow singleread
 
         sample_merge_channel =
             by_sample_channel
-            .combine(sample_count_channel, by: 0)
+            .join(sample_count_channel)
             .map {
                 sampleName, bam, filesPerSample ->
                 tuple groupKey(sampleName, filesPerSample), bam
