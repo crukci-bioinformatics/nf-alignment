@@ -44,7 +44,7 @@ workflow pairedend
 
         merge_channel =
             picard_fixmate.out
-            .join(chunk_count_channel)
+            .combine(chunk_count_channel, by: 0)
             .map {
                 basename, bam, chunkCount ->
                 tuple groupKey(basename, chunkCount), bam
@@ -62,14 +62,11 @@ workflow pairedend
 
         // Join the output of merge or mark duplicates with the sequencing info
         // by base name.
-        by_sample_channel =
+        with_info_channel =
             picard_merge_or_markduplicates.out.merged_bam
-            .join(
-                sequencing_info_channel.map { tuple basenameExtractor(it.Read1), it },
-                failOnDuplicate: true, failOnMismatch: true
-            )
+            .combine(sequencing_info_channel.map { tuple basenameExtractor(it.Read1), it }, by: 0)
 
-        make_safe_for_merging(by_sample_channel)
+        make_safe_for_merging(with_info_channel)
 
         // Map to the sample name and collection BAM files for that sample.
         safe_sample_channel = make_safe_for_merging.out
