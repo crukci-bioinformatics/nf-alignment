@@ -92,7 +92,7 @@ workflow singleread
 
         sample_merge_channel =
             safe_sample_channel
-            .join(sample_count_channel)
+            .combine(sample_count_channel, by: 0)
             .map {
                 sampleName, bam, filesPerSample ->
                 tuple groupKey(sampleName, filesPerSample), bam
