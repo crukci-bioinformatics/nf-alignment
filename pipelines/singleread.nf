@@ -42,9 +42,12 @@ workflow singleread
         // allow things to run when each group is complete, rather than
         // waiting for everything.
 
+        chunk_count_channel.view()
+        picard_sortsam.out.view()
+
         merge_channel =
             picard_sortsam.out
-            .join(chunk_count_channel)
+            .combine(chunk_count_channel, by: 0)
             .map {
                 basename, bam, chunkCount ->
                 tuple groupKey(basename, chunkCount), bam
