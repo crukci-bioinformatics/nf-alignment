@@ -42,9 +42,6 @@ workflow singleread
         // allow things to run when each group is complete, rather than
         // waiting for everything.
 
-        chunk_count_channel.view()
-        picard_sortsam.out.view()
-
         merge_channel =
             picard_sortsam.out
             .combine(chunk_count_channel, by: 0)
