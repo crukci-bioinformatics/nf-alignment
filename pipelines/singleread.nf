@@ -44,7 +44,7 @@ workflow singleread
 
         merge_channel =
             picard_sortsam.out
-            .join(chunk_count_channel)
+            .combine(chunk_count_channel, by: 0)
             .map {
                 basename, bam, chunkCount ->
                 tuple groupKey(basename, chunkCount), bam
