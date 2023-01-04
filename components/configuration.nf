@@ -7,11 +7,15 @@ import java.nio.file.Files
 import org.apache.commons.csv.*
 
 include { logException } from './debugging'
-include { rnaseqStrandSpecificity } from './functions'
+
+include {
+    fastaReferencePath; genomeSizesPath; referenceRefFlatPath;
+    bwaIndexPath; bwamem2IndexPath; starIndexPath;
+    pairedEnd; rnaseqStrandSpecificity
+} from "./functions"
 
 /*
- * Check the parameters from alignment.config and the command line are
- * set and valid.
+ * Check the parameters are set and valid.
  */
 def checkParameters(params)
 {
@@ -51,32 +55,11 @@ def checkParameters(params)
 
         if (errors)
         {
-            log.warn "Missing arguments can also be added to alignment.config instead of being supplied on the command line."
+            log.warn "Missing arguments can also be added to nextflow.config instead of being supplied on the command line."
             return false
         }
 
-        aligner = aligner.toLowerCase()
-        assemblyPrefix = "${shortSpecies}.${assembly}"
-
-        // Decipher single read or paired end and check the aligner is supported.
-
-        switch (endType.toLowerCase()[0])
-        {
-            case 's':
-                pairedEnd = false
-                break
-
-            case 'p':
-                pairedEnd = true
-                break
-
-            default:
-                log.error "End type must be given to indicate single read (se/sr) or paired end (pe)."
-                errors = true
-                break
-        }
-
-        switch (aligner)
+        switch (aligner.toLowerCase())
         {
             case 'bwa':
                 if (!containsKey('bwaIndex'))
@@ -90,15 +73,12 @@ def checkParameters(params)
                         }
                         errors = true
                     }
-                    else
-                    {
-                        bwaIndex = "${referenceRoot}/${species}/${assembly}/bwa-${bwaVersion}/${assemblyPrefix}"
-                    }
                 }
                 break
 
             case 'bwamem':
             case 'bwa_mem':
+            case 'bwamem2':
                 if (!containsKey('bwamem2Index'))
                 {
                     if (!containsKey('referenceRoot'))
@@ -109,10 +89,6 @@ def checkParameters(params)
                             referenceRootWarned = true
                         }
                         errors = true
-                    }
-                    else
-                    {
-                        bwamem2Index = "${referenceRoot}/${species}/${assembly}/bwamem2-${bwamem2Version}/${assemblyPrefix}"
                     }
                 }
                 break
@@ -129,10 +105,6 @@ def checkParameters(params)
                         }
                         errors = true
                     }
-                    else
-                    {
-                        starIndex = "${referenceRoot}/${species}/${assembly}/star-${starVersion}"
-                    }
                 }
                 break
 
@@ -141,7 +113,22 @@ def checkParameters(params)
                 errors = true
                 break
         }
+    }
 
+    // Decipher single read or paired end and check the aligner is supported.
+
+    try
+    {
+        pairedEnd()
+    }
+    catch (IllegalArgumentException e)
+    {
+        log.error e.message
+        errors = true
+    }
+
+    params.with
+    {
         // Check if reference files and directories are set. If not, default to our
         // standard structure.
 
@@ -156,10 +143,6 @@ def checkParameters(params)
                 }
                 errors = true
             }
-            else
-            {
-                referenceFasta = "${referenceRoot}/${species}/${assembly}/fasta/${assemblyPrefix}.fa"
-            }
         }
 
         if (createCoverage && !containsKey('genomeSizes'))
@@ -172,10 +155,6 @@ def checkParameters(params)
                     referenceRootWarned = true
                 }
                 errors = true
-            }
-            else
-            {
-                genomeSizes = "${referenceRoot}/${species}/${assembly}/fasta/${assemblyPrefix}.sizes"
             }
         }
 
@@ -191,10 +170,6 @@ def checkParameters(params)
                         referenceRootWarned = true
                     }
                     errors = true
-                }
-                else
-                {
-                    referenceRefFlat = "${referenceRoot}/${species}/${assembly}/annotation/${assemblyPrefix}.txt"
                 }
             }
 
@@ -214,56 +189,56 @@ def checkParameters(params)
                     errors = true
             }
         }
+    }
 
-        if (errors)
-        {
-            return false
-        }
+    if (errors)
+    {
+        return false
+    }
 
-        // Make sure required reference files are available.
+    // Make sure required reference files are available.
 
-        if (!Files.exists(file(referenceFasta)))
-        {
-            log.error "FASTQ reference file '${referenceFasta}' does not exist."
-            errors = true
-        }
-        if (createCoverage && !Files.exists(file(genomeSizes)))
-        {
-            log.error "Genome sizes file '${genomeSizes}' does not exist."
-            errors = true
-        }
-        if (rnaseqMetrics && !Files.exists(file(referenceRefFlat)))
-        {
-            log.error "Reference annotation refflat file '${referenceRefFlat}' does not exist."
-            errors = true
-        }
-        switch (aligner)
-        {
-            case 'bwa':
-                if (!Files.exists(file("${bwaIndex}.pac")))
-                {
-                    log.error "BWA index files '${referenceFasta}' do not exist."
-                    errors = true
-                }
-                break
+    if (!Files.exists(file(fastaReferencePath())))
+    {
+        log.error "FASTQ reference file '${fastaReferencePath()}' does not exist."
+        errors = true
+    }
+    if (params.createCoverage && !Files.exists(file(genomeSizesPath())))
+    {
+        log.error "Genome sizes file '${genomeSizesPath()}' does not exist."
+        errors = true
+    }
+    if (params.rnaseqMetrics && !Files.exists(file(referenceRefFlatPath())))
+    {
+        log.error "Reference annotation refflat file '${referenceRefFlatPath()}' does not exist."
+        errors = true
+    }
+    switch (params.aligner)
+    {
+        case 'bwa':
+            if (!Files.exists(file("${bwaIndexPath()}.pac")))
+            {
+                log.error "BWA index files '${bwaIndexPath()}' do not exist."
+                errors = true
+            }
+            break
 
-            case 'bwamem':
-            case 'bwa_mem':
-                if (!Files.exists(file("${bwamem2Index}.pac")))
-                {
-                    log.error "BWAmem index files '${bwamem2Index}' do not exist."
-                    errors = true
-                }
-                break
+        case 'bwamem':
+        case 'bwa_mem':
+            if (!Files.exists(file("${bwamem2IndexPath()}.pac")))
+            {
+                log.error "BWAmem index files '${bwamem2IndexPath()}' do not exist."
+                errors = true
+            }
+            break
 
-            case 'star':
-                if (!Files.isDirectory(file(starIndex)))
-                {
-                    log.error "STAR genome directory '${starIndex}' does not exist."
-                    errors = true
-                }
-                break
-        }
+        case 'star':
+            if (!Files.isDirectory(file(starIndexPath())))
+            {
+                log.error "STAR genome directory '${starIndexPath()}' does not exist."
+                errors = true
+            }
+            break
     }
 
     return !errors
@@ -273,37 +248,35 @@ def checkParameters(params)
  * Write a log message summarising how the pipeline is configured and the
  * locations of reference files that will be used.
  */
-def displayParameters(params)
+def displayParameters()
 {
-    params.with
+    log.info "${pairedEnd() ? 'Paired end' : 'Single read'} alignment against ${params.species} ${params.assembly} using ${params.aligner.toUpperCase()}."
+    log.info "FASTQ directory: ${params.fastqDir}"
+    log.info "FASTA file: ${fastaReferencePath()}"
+    if (params.createCoverage)
     {
-        log.info "${pairedEnd ? 'Paired end' : 'Single read'} alignment against ${species} ${assembly} using ${aligner.toUpperCase()}."
-        log.info "FASTQ directory: ${fastqDir}"
-        log.info "FASTA file: ${referenceFasta}"
-        if (createCoverage)
-        {
-            log.info "Genome sizes: ${genomeSizes}"
-        }
-        if (rnaseqMetrics)
-        {
-            log.info "Reference annotations (refflat): ${referenceRefFlat}"
-            log.info "Strand specificity: ${rnaseqStrandSpecificity(params)}"
-        }
-        switch (aligner)
-        {
-            case 'bwa':
-                log.info "BWA index: ${bwaIndex}"
-                break
+        log.info "Genome sizes: ${genomeSizesPath()}"
+    }
+    if (params.rnaseqMetrics)
+    {
+        log.info "Reference annotations (refflat): ${referenceRefFlatPath()}"
+        log.info "Strand specificity: ${rnaseqStrandSpecificity()}"
+    }
+    switch (params.aligner.toLowerCase())
+    {
+        case 'bwa':
+            log.info "BWA index: ${bwaIndexPath()}"
+            break
 
-            case 'bwamem':
-            case 'bwa_mem':
-                log.info "BWAmem index: ${bwamem2Index}"
-                break
+        case 'bwamem':
+        case 'bwa_mem':
+        case 'bwamem2':
+            log.info "BWAmem index: ${bwamem2IndexPath()}"
+            break
 
-            case 'star':
-                log.info "STAR index: ${starIndex}"
-                break
-        }
+        case 'star':
+            log.info "STAR index: ${starIndexPath()}"
+            break
     }
 }
 
@@ -312,7 +285,7 @@ def displayParameters(params)
  * in the configured mode and that each line in the file has those mandatory
  * values set.
  */
-def checkAlignmentCSV(params)
+def checkAlignmentCSV()
 {
     def ok = true
     try
@@ -333,7 +306,7 @@ def checkAlignmentCSV(params)
                         log.error "${params.alignmentCSV} must contain a column 'Read1'."
                         ok = false
                     }
-                    if (params.pairedEnd && !record.isMapped('Read2'))
+                    if (pairedEnd() && !record.isMapped('Read2'))
                     {
                         log.error "${params.alignmentCSV} must contain a column 'Read2' for aligning paired end."
                         ok = false
@@ -356,7 +329,7 @@ def checkAlignmentCSV(params)
                     log.error "No 'Read1' file name set on line ${rowNum}."
                     ok = false
                 }
-                if (params.pairedEnd && !record.get('Read2'))
+                if (pairedEnd() && !record.get('Read2'))
                 {
                     log.error "No 'Read2' file name set on line ${rowNum}."
                     ok = false

@@ -39,7 +39,7 @@ which the FASTQ files should be put. The kick start application can be run in
 names to create the CSV file for this pipeline.
 
 After assembling the data, the alignment pipeline needs a little more configuration.
-Create a file `alignment.config` in the project directory. This is additional Nextflow
+Create a file `nextflow.config` in the project directory. This is additional Nextflow
 configuration that cannot be defined in the main pipeline, as it is specific to your
 data. The file should contain:
 
@@ -57,7 +57,7 @@ params {
 This is the minimal information needed by the pipeline to run. It defines the genome
 to align to, the aligner to use, and whether to do single or paired end alignment.
 
-With the FASTQ data available, `alignment.csv` created and `alignment.config`
+With the FASTQ data available, `alignment.csv` created and `nextflow.config`
 set the pipeline can actually be run.
 
 ```
@@ -67,6 +67,9 @@ nextflow run crukci-bioinformatics/nf-alignment
 That is it. It will align all the FASTQ files (or file pairs) into BAM files, placing
 them into a directory `bam` in the project directory.
 
+**Note** `nextflow.config` is the default file for folder specific configuration.
+You can have any number of these with different names and can select them with
+Nextflow's `-c` option on the `run` command.
 
 ### Controlling the Pipeline
 
@@ -94,7 +97,7 @@ nextflow run crukci-bioinformatics/nf-alignment -profile cluster
 #### Additional Configuration
 
 The first flags that one can change are the controls for PCR duplicate marking, sample
-merging and coverage file creation. These can be added to `alignment.config` thus
+merging and coverage file creation. These can be added to `nextflow.config` thus
 (between the curly brackets):
 
 ```
@@ -114,7 +117,7 @@ coverage files are also put into this directory alongside the BAM files.
 Additional metrics are available for the aligned files. The pipeline can be configured
 to provide alignment metrics, insert size metrics, RNA-seq metrics
 and whole genome sequencing (WGS) metrics. These are controlled by additional parameters
-in `alignment.config`.
+in `nextflow.config`.
 
 ```
     alignmentMetrics =  true | false   /* Default true  */
@@ -128,20 +131,20 @@ single end the switch above has no effect: they will not be produced.
 
 #### Command Line Switches
 
-All of the parameters defined in `alignment.config` can be overridden on the command
+All of the parameters defined in `nextflow.config` can be overridden on the command
 line. Nextflow accepts double dash switches to set parameters using the same names as
-provided in `alignment.config`. For example, to turn on sample BAM creation as a one
+provided in `nextflow.config`. For example, to turn on sample BAM creation as a one
 off, one can use:
 
 ```
 nextflow run crukci-bioinformatics/nf-alignment --mergeSamples=true
 ```
 
-Command line switches override values defined in `alignment.config`.
+Command line switches override values defined in `nextflow.config`.
 
 #### Further Configuration
 
-`alignment.config` is a full part of the
+`nextflow.config` is a full part of the
 [Nextflow configuration](https://www.nextflow.io/docs/latest/config.html).
 As such, and assuming one knows what one is doing, it can include any additional
 configuration documented in the Nextflow pages, such as
@@ -156,7 +159,7 @@ The pipeline expects reference data to be set up in the structure defined by
 [our reference data pipeline](https://internal-bioinformatics.cruk.cam.ac.uk/docs/referencegenomes/main.html).
 The profiles have default paths for the root location of this structure for use on our
 cluster and Bioinformatics core server. For the "standard" profile on one's local
-machine, the reference root should be defined in `alignment.config`.
+machine, the reference root should be defined in `nextflow.config`.
 
 ```
 params {

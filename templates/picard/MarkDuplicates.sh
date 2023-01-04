@@ -59,9 +59,9 @@ function clean_up
 
 trap clean_up SIGHUP SIGINT SIGTERM
 
-!{params.java} -Djava.io.tmpdir="$TMPDIR" \
+java -Djava.io.tmpdir="$TMPDIR" \
 -Xms!{javaMem}m -Xmx!{javaMem}m \
--jar !{params.picard} MarkDuplicates \
+-jar /usr/local/lib/picard.jar MarkDuplicates \
 !{'INPUT=' + inBams.join(' INPUT=')} \
 OUTPUT="!{outBam}" \
 METRICS_FILE="!{metrics}" \

@@ -1,5 +1,5 @@
 #!/bin/bash
 
-!{params.ucsctools}/bedSort \
+bedSort \
 !{bedgraph} \
 "!{sortedBed}"

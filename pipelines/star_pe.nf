@@ -4,7 +4,7 @@
 
 params.aligner = "star"
 
-include { basenameExtractor } from "../components/functions"
+include { basenameExtractor; starIndexPath } from "../components/functions"
 include { STAR } from "../processes/star"
 include { pairedend } from "./pairedend"
 
@@ -14,7 +14,7 @@ workflow star_pe
         csv_channel
 
     main:
-        star_index_channel = channel.fromPath(params.starIndex)
+        star_index_channel = channel.fromPath(starIndexPath())
 
         fastq_channel =
             csv_channel

@@ -2,11 +2,10 @@
 
 set -o pipefail
 
-!{params.bwa} \
-    sampe \
+bwa sampe \
     "!{bwaIndexDir}/!{bwaIndexPrefix}" \
     !{saiFiles} \
     !{fastqFiles} | \
-!{params.samtools} \
+samtools \
     view -b -h \
     -o "!{outBam}"

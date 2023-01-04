@@ -284,7 +284,7 @@ process picard_rnaseqmetrics
     shell:
         metrics = "${alignedFileName(basename)}.rnaseq.txt"
         javaMem = javaMemMB(task)
-        strandSpecificity = rnaseqStrandSpecificity(params)
+        strandSpecificity = rnaseqStrandSpecificity()
 
         template "picard/CollectRnaSeqMetrics.sh"
 }
@@ -448,7 +448,7 @@ process sample_rnaseqmetrics
         safeSampleName = safeName(sampleName)
         metrics = "${alignedFileName(safeSampleName)}.rnaseq.txt"
         javaMem = javaMemMB(task)
-        strandSpecificity = rnaseqStrandSpecificity(params)
+        strandSpecificity = rnaseqStrandSpecificity()
 
         template "picard/CollectRnaSeqMetrics.sh"
 }

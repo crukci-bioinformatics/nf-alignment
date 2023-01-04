@@ -1,6 +1,6 @@
 #!/bin/bash
 
-!{params.ucsctools}/bedGraphToBigWig \
+bedGraphToBigWig \
 !{sortedBed} \
 "!{genomeSizes}" \
 "!{bigwig}"

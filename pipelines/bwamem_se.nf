@@ -4,7 +4,7 @@
 
 params.aligner = "bwamem"
 
-include { basenameExtractor; sizeOf } from "../components/functions"
+include { basenameExtractor; sizeOf; bwamem2IndexPath } from "../components/functions"
 include { split_fastq } from "../processes/fastq"
 include { bwa_mem } from "../processes/bwamem"
 include { singleread } from "./singleread"
@@ -15,7 +15,7 @@ workflow bwamem_se
         csv_channel
 
     main:
-        bwamem2_index_path = file(params.bwamem2Index)
+        bwamem2_index_path = file(bwamem2IndexPath())
         bwamem2_index_channel = channel.of(tuple bwamem2_index_path.parent, bwamem2_index_path.name)
 
         fastq_channel =

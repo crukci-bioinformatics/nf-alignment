@@ -4,7 +4,7 @@
 
 params.aligner = "bwa"
 
-include { basenameExtractor; sizeOf } from "../components/functions"
+include { basenameExtractor; sizeOf; bwaIndexPath } from "../components/functions"
 include { split_fastq as split_fastq_1; split_fastq as split_fastq_2 } from "../processes/fastq"
 include { bwa_aln as bwa_aln_1; bwa_aln as bwa_aln_2; bwa_sampe } from "../processes/bwa"
 include { pairedend } from "./pairedend"
@@ -15,7 +15,7 @@ workflow bwa_pe
         csv_channel
 
     main:
-        bwa_index_path = file(params.bwaIndex)
+        bwa_index_path = file(bwaIndexPath())
         bwa_index_channel = channel.of(tuple bwa_index_path.parent, bwa_index_path.name)
 
         fastq_channel =

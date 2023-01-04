@@ -6,7 +6,6 @@ import nextflow.util.BlankSeparatedList
 
 include { extractChunkNumber } from '../components/functions'
 
-
 /*
  * Align a single fastq file.
  */

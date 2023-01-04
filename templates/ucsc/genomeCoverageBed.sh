@@ -1,6 +1,6 @@
 #!/bin/bash
 
-!{params.bedtools}/genomeCoverageBed \
+genomeCoverageBed \
 -bga \
 -ibam !{inBam} \
 -g "!{genomeSizes}" \

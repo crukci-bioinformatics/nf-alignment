@@ -17,7 +17,7 @@ ARG TAROPTS="--no-same-owner --no-same-permissions"
 
 ENV JAVA_HOME=/usr/lib/jvm/jre-17
 ENV PATH=$JAVA_HOME/bin:$PATH
-ENV LD_LIBRARY_PATH=${INSTALL_DIR}/htslib-${HTSLIB_V}/lib
+ENV LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib
 
 RUN dnf install -y dnf-plugins-core epel-release
 RUN dnf config-manager --set-enabled powertools
@@ -41,7 +41,7 @@ RUN cd ${BUILD_DIR}; \
     wget https://github.com/samtools/htslib/releases/download/${HTSLIB_V}/htslib-${HTSLIB_V}.tar.bz2 && \
     tar ${TAROPTS} -jxf htslib-${HTSLIB_V}.tar.bz2
 RUN cd ${BUILD_DIR}/htslib-${HTSLIB_V}; \
-	./configure --prefix="${INSTALL_DIR}/htslib-${HTSLIB_V}" && \
+	./configure --prefix=/usr/local && \
 	make && \
 	make install
 
@@ -50,48 +50,46 @@ RUN cd ${BUILD_DIR}; \
     wget https://github.com/samtools/samtools/releases/download/${SAMTOOLS_V}/samtools-${SAMTOOLS_V}.tar.bz2 && \
     tar ${TAROPTS} -jxf samtools-${SAMTOOLS_V}.tar.bz2
 RUN cd ${BUILD_DIR}/samtools-${SAMTOOLS_V}; \
-    ./configure --prefix="${INSTALL_DIR}/samtools-${SAMTOOLS_V}" --with-htslib="${INSTALL_DIR}/htslib-${HTSLIB_V}" && \
+    ./configure --prefix=/usr/local --with-htslib=/usr/local/lib && \
     make && \
     make install
 
 # bedtools2
 RUN cd ${BUILD_DIR}; \
     wget https://github.com/arq5x/bedtools2/releases/download/v${BEDTOOLS_V}/bedtools-${BEDTOOLS_V}.tar.gz && \
-    tar ${TAROPTS} -xzf ${BUILD_DIR}/bedtools-${BEDTOOLS_V}.tar.gz
-RUN cd ${BUILD_DIR}/bedtools2; \
-    make install prefix="" DESTDIR="${INSTALL_DIR}/bedtools-${BEDTOOLS_V}"
+    tar ${TAROPTS} -xzf ${BUILD_DIR}/bedtools-${BEDTOOLS_V}.tar.gz && \
+    cd ${BUILD_DIR}/bedtools2 && \
+    make install prefix="" DESTDIR=/usr/local
 
 # BWA
 RUN cd ${BUILD_DIR}; \
-    wget https://github.com/lh3/bwa/releases/download/v${BWA_V}/bwa-${BWA_V}.tar.bz2
-RUN cd ${INSTALL_DIR}; \
-    tar ${TAROPTS} -jxf ${BUILD_DIR}/bwa-${BWA_V}.tar.bz2; \
-    cd ${INSTALL_DIR}/bwa-${BWA_V}; \
-    make
+    wget https://github.com/lh3/bwa/releases/download/v${BWA_V}/bwa-${BWA_V}.tar.bz2 && \
+    tar ${TAROPTS} -jxf ${BUILD_DIR}/bwa-${BWA_V}.tar.bz2 && \
+    cd bwa-${BWA_V} && \
+    make && \
+    cp -p bwa /usr/local/bin
 
 # BWA-mem2
 RUN cd ${BUILD_DIR}; \
-    wget https://github.com/bwa-mem2/bwa-mem2/releases/download/v${BWAMEM_V}/bwa-mem2-${BWAMEM_V}_x64-linux.tar.bz2
-RUN cd ${INSTALL_DIR}; \
-    tar ${TAROPTS} -jxf ${BUILD_DIR}/bwa-mem2-${BWAMEM_V}_x64-linux.tar.bz2; \
-    mv bwa-mem2-${BWAMEM_V}_x64-linux bwa-mem2-${BWAMEM_V}
+    wget https://github.com/bwa-mem2/bwa-mem2/releases/download/v${BWAMEM_V}/bwa-mem2-${BWAMEM_V}_x64-linux.tar.bz2 && \
+    tar ${TAROPTS} -jxf ${BUILD_DIR}/bwa-mem2-${BWAMEM_V}_x64-linux.tar.bz2 && \
+    cp -p bwa-mem2-${BWAMEM_V}_x64-linux/bwa-mem2* /usr/local/bin
 
 # STAR
 RUN cd ${BUILD_DIR}; \
-    wget -O STAR_V-${STAR_V}.tar.gz https://github.com/alexdobin/STAR/archive/${STAR_V}.tar.gz
-RUN cd ${INSTALL_DIR}; \
-    tar ${TAROPTS} -xzf ${BUILD_DIR}/STAR_V-${STAR_V}.tar.gz
+    wget -O STAR-${STAR_V}.tar.gz https://github.com/alexdobin/STAR/archive/${STAR_V}.tar.gz && \
+    tar ${TAROPTS} -xzf ${BUILD_DIR}/STAR-${STAR_V}.tar.gz && \
+    cp -p STAR-${STAR_V}/bin/Linux_x86_64_static/* /usr/local/bin
 
 # UCSC Tools
-RUN mkdir ${INSTALL_DIR}/ucsc_tools; \
-    cd ${INSTALL_DIR}/ucsc_tools; \
+RUN cd /usr/local/bin; \
     wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/bedGraphToBigWig; \
     wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/bedSort; \
-    chmod a+rx *
+    chmod a+rx bedGraphToBigWig bedSort
 
 # Picard
-RUN cd ${INSTALL_DIR}; \
-    wget -O picard-${PICARD_V}.jar https://github.com/broadinstitute/picard/releases/download/${PICARD_V}/picard.jar
+RUN cd /usr/local/lib; \
+    wget -O picard.jar https://github.com/broadinstitute/picard/releases/download/${PICARD_V}/picard.jar
 
 
 ## Clean up

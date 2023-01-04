@@ -7,6 +7,7 @@
 nextflow.enable.dsl = 2
 
 include { checkParameters; checkAlignmentCSV; displayParameters } from "./components/configuration"
+include { pairedEnd } from "./components/functions"
 
 // Check all is well with the parameters and the alignment.csv file.
 
@@ -14,15 +15,15 @@ if (!checkParameters(params))
 {
     exit 1
 }
-if (!checkAlignmentCSV(params))
+if (!checkAlignmentCSV())
 {
     exit 1
 }
 
-switch (params.aligner)
+switch (params.aligner.toLowerCase())
 {
     case 'bwa':
-        if (params.pairedEnd)
+        if (pairedEnd())
         {
             include { bwa_pe as alignment } from "./pipelines/bwa_pe"
         }
@@ -34,7 +35,8 @@ switch (params.aligner)
 
     case 'bwamem':
     case 'bwa_mem':
-        if (params.pairedEnd)
+    case 'bwamem2':
+        if (pairedEnd())
         {
             include { bwamem_pe as alignment } from "./pipelines/bwamem_pe"
         }
@@ -45,7 +47,7 @@ switch (params.aligner)
         break
 
     case 'star':
-        if (params.pairedEnd)
+        if (pairedEnd())
         {
             include { star_pe as alignment } from "./pipelines/star_pe"
         }
@@ -59,7 +61,7 @@ switch (params.aligner)
         exit 1, "Aligner must be one of 'bwa', 'bwamem' or 'star'."
 }
 
-displayParameters(params)
+displayParameters()
 
 
 /*

@@ -1,7 +1,6 @@
 #!/bin/bash
 
-!{params.bwa} \
-aln \
+bwa aln \
 -f "!{outSai}" \
 "!{bwaIndexDir}/!{bwaIndexPrefix}" \
 !{fastqFile}

@@ -26,9 +26,9 @@ function clean_up
 
 trap clean_up SIGHUP SIGINT SIGTERM
 
-!{params.java} -Djava.io.tmpdir="$TMPDIR" \
+java -Djava.io.tmpdir="$TMPDIR" \
 -Xms!{javaMem}m -Xmx!{javaMem}m \
--jar !{params.picard} CollectInsertSizeMetrics \
+-jar /usr/local/lib/picard.jar CollectInsertSizeMetrics \
 INPUT=!{inBam} \
 OUTPUT="!{metrics}" \
 HISTOGRAM_FILE="!{plot}" \

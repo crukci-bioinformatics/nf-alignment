@@ -17,5 +17,5 @@ process split_fastq
         tuple val(basename), val(read), path("*-S??????.fq.gz")
 
     shell:
-        template "fastq/split_fastq.sh"
+        template "fastq/splitFastq.sh"
 }
