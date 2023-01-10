@@ -4,7 +4,8 @@
 
 params.aligner = "star"
 
-include { basenameExtractor; starIndexPath } from "../components/functions"
+include { basenameExtractor } from "../components/functions"
+include { starIndexPath } from "../components/defaults"
 include { STAR } from "../processes/star"
 include { pairedend } from "./pairedend"
 

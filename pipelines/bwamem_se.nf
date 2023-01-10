@@ -4,7 +4,8 @@
 
 params.aligner = "bwamem"
 
-include { basenameExtractor; sizeOf; bwamem2IndexPath } from "../components/functions"
+include { basenameExtractor; sizeOf } from "../components/functions"
+include { bwamem2IndexPath } from "../components/defaults"
 include { split_fastq } from "../processes/fastq"
 include { bwa_mem } from "../processes/bwamem"
 include { singleread } from "./singleread"

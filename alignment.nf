@@ -7,7 +7,7 @@
 nextflow.enable.dsl = 2
 
 include { checkParameters; checkAlignmentCSV; displayParameters } from "./components/configuration"
-include { pairedEnd } from "./components/functions"
+include { pairedEnd } from "./components/defaults"
 
 // Check all is well with the parameters and the alignment.csv file.
 

@@ -6,7 +6,8 @@
 
 import static org.apache.commons.lang3.StringUtils.trimToNull
 
-include { alignedFileName; safeName; sizeOf; rnaseqStrandSpecificity } from '../components/functions'
+include { alignedFileName; safeName; sizeOf } from '../components/functions'
+include { rnaseqStrandSpecificity } from '../components/defaults'
 
 /**
  * Give a number for the Java heap size based on the task memory, allowing for

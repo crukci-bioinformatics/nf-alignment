@@ -12,7 +12,7 @@ include {
     fastaReferencePath; genomeSizesPath; referenceRefFlatPath;
     bwaIndexPath; bwamem2IndexPath; starIndexPath;
     pairedEnd; rnaseqStrandSpecificity
-} from "./functions"
+} from "./defaults"
 
 /*
  * Check the parameters are set and valid.
@@ -271,7 +271,7 @@ def displayParameters()
         case 'bwamem':
         case 'bwa_mem':
         case 'bwamem2':
-            log.info "BWAmem index: ${bwamem2IndexPath()}"
+            log.info "BWAmem2 index: ${bwamem2IndexPath()}"
             break
 
         case 'star':

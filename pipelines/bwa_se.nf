@@ -4,7 +4,8 @@
 
 params.aligner = "bwa"
 
-include { basenameExtractor; sizeOf; bwaIndexPath } from "../components/functions"
+include { basenameExtractor; sizeOf } from "../components/functions"
+include { bwaIndexPath } from "../components/defaults"
 include { split_fastq } from "../processes/fastq"
 include { bwa_aln; bwa_samse } from "../processes/bwa"
 include { singleread } from "./singleread"

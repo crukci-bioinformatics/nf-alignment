@@ -16,9 +16,8 @@ include {
     sample_genomecoverage; sample_bedsort; sample_bedgraphtobigwig
 } from "../processes/coverage"
 
-include {
-    basenameExtractor; fastaReferencePath; genomeSizesPath; referenceRefFlatPath
-} from "../components/functions"
+include { basenameExtractor } from "../components/functions"
+include { fastaReferencePath; genomeSizesPath; referenceRefFlatPath } from "../components/defaults"
 
 workflow singleread
 {
