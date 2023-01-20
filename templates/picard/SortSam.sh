@@ -20,6 +20,8 @@
 # on the RAM and maxRecordsInRAM balance.
 
 
+set +e  # Don't fail on error
+
 export TMPDIR=temp
 mkdir -p "$TMPDIR"
 

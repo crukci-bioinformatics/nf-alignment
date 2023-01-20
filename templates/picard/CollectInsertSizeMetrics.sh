@@ -15,6 +15,8 @@
 # Note: Metrics labeled as percentages are actually expressed as fractions!
 
 
+set +e  # Don't fail on error
+
 export TMPDIR=temp
 mkdir -p "$TMPDIR"
 

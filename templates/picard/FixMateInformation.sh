@@ -9,6 +9,8 @@
 # are written to the output file unchanged.
 
 
+set +e  # Don't fail on error
+
 export TMPDIR=temp
 mkdir -p "$TMPDIR"
 
