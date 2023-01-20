@@ -6,8 +6,8 @@
 
 import static org.apache.commons.lang3.StringUtils.trimToNull
 
-include { javaMemMB; sizeOf } from "../modules/nextflow-support/functions"
-include { alignedFileName; safeName } from '../components/functions'
+include { javaMemMB; sizeOf; safeName } from "../modules/nextflow-support/functions"
+include { alignedFileName } from '../components/functions'
 include { rnaseqStrandSpecificity } from '../components/defaults'
 
 /**

@@ -2,7 +2,8 @@
  * Processes for calculating genome coverage.
  */
 
-include { alignedFileName; safeName } from "../components/functions"
+include { safeName } from '../modules/nextflow-support/functions'
+include { alignedFileName } from "../components/functions"
 
 /*
  * Run UCSC 'genomeCoverageBed' tool to calculate coverage from a BAM file.

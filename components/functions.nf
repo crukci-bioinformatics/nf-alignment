@@ -38,33 +38,3 @@ def extractChunkNumber(f)
     assert m : "Don't have file pattern with chunk numbers: '${f.name}'"
     return m[0][1]
 }
-
-/*
- * Make a name safe to be used as a file name. Everything that's not
- * alphanumeric, dot, underscore or hyphen is converted to an underscore.
- */
-def safeName(name)
-{
-    def nameStr = name.toString()
-    def safe = new StringBuilder(nameStr.length())
-    def iter = new StringCharacterIterator(nameStr)
-
-    for (def c = iter.first(); c != CharacterIterator.DONE; c = iter.next())
-    {
-        switch (c)
-        {
-            case { isAsciiAlphanumeric(it) }:
-            case '_':
-            case '-':
-            case '.':
-                safe << c
-                break
-
-            default:
-                safe << '_'
-                break
-        }
-    }
-
-    return safe.toString()
-}
