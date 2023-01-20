@@ -1,6 +1,6 @@
 #!/bin/sh
 
-TAG="4.1.0"
+TAG="4.1.1"
 REPO="crukcibioinformatics/alignment:$TAG"
 
 sudo rm -f alignment-${TAG}.sif

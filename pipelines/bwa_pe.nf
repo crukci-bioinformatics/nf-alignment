@@ -4,7 +4,8 @@
 
 params.aligner = "bwa"
 
-include { basenameExtractor; sizeOf } from "../components/functions"
+include { sizeOf } from "../modules/nextflow-support/functions"
+include { basenameExtractor } from "../components/functions"
 include { bwaIndexPath } from "../components/defaults"
 include { split_fastq as split_fastq_1; split_fastq as split_fastq_2 } from "../processes/fastq"
 include { bwa_aln as bwa_aln_1; bwa_aln as bwa_aln_2; bwa_sampe } from "../processes/bwa"

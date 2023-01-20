@@ -5,6 +5,8 @@ LABEL   maintainer="Richard Bowers<richard.bowers@cruk.cam.ac.uk>"
 ARG INSTALL_DIR=/opt
 ARG BUILD_DIR=/var/tmp/alignment_software_build
 
+ARG GROOVY_V=4.0.7
+
 ARG BEDTOOLS_V=2.30.0
 ARG BWA_V=0.7.17
 ARG BWAMEM_V=2.2.1
@@ -16,7 +18,8 @@ ARG STAR_V=2.7.10b
 ARG TAROPTS="--no-same-owner --no-same-permissions"
 
 ENV JAVA_HOME=/usr/lib/jvm/jre-17
-ENV PATH=$JAVA_HOME/bin:$PATH
+ENV GROOVY_HOME=${INSTALL_DIR}/groovy-${GROOVY_V}
+ENV PATH=$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
 ENV LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib
 
 RUN dnf install -y dnf-plugins-core epel-release
@@ -29,6 +32,11 @@ RUN dnf install -y \
 
 RUN alternatives --set python /usr/bin/python2
 RUN mkdir -p ${INSTALL_DIR} ${BUILD_DIR}
+
+# Groovy
+RUN cd ${BUILD_DIR}; \
+    wget -O groovy.zip https://groovy.jfrog.io/artifactory/dist-release-local/groovy-zips/apache-groovy-binary-${GROOVY_V}.zip && \
+    unzip -d ${INSTALL_DIR} groovy.zip
 
 # Fastq splitter
 RUN cd ${BUILD_DIR}; \

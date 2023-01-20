@@ -6,7 +6,7 @@
 import java.nio.file.Files
 import org.apache.commons.csv.*
 
-include { logException } from './debugging'
+include { logException } from '../modules/nextflow-support/debugging'
 
 include {
     fastaReferencePath; genomeSizesPath; referenceRefFlatPath;

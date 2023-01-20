@@ -31,4 +31,6 @@ REFERENCE_SEQUENCE="!{referenceFasta}" \
 VALIDATION_STRINGENCY=SILENT \
 TMP_DIR="$TMPDIR"
 
+groovy "!{projectDir}/modules/nextflow-support/outOfMemoryCheck.groovy" $?
+
 clean_up $?

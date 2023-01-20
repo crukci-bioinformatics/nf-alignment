@@ -6,17 +6,9 @@
 
 import static org.apache.commons.lang3.StringUtils.trimToNull
 
-include { alignedFileName; safeName; sizeOf } from '../components/functions'
+include { javaMemMB; sizeOf } from "../modules/nextflow-support/functions"
+include { alignedFileName; safeName } from '../components/functions'
 include { rnaseqStrandSpecificity } from '../components/defaults'
-
-/**
- * Give a number for the Java heap size based on the task memory, allowing for
- * some overhead for the JVM itself from the total allowed.
- */
-def javaMemMB(task)
-{
-    return task.memory.toMega() - 128
-}
 
 /**
  * Calculate the maximum number of reads to hold in RAM for Picard sorting
@@ -88,7 +80,7 @@ def maxReadsInRam(availableMB, readLength)
  */
 process picard_addreadgroups
 {
-    label "picard"
+    label "picardSmall"
 
     input:
         tuple val(basename), val(chunk), path(inBam), val(sequencingInfo)
