@@ -8,6 +8,7 @@ ARG BUILD_DIR=/var/tmp/alignment_software_build
 ARG GROOVY_V=4.0.7
 
 ARG BEDTOOLS_V=2.30.0
+ARG BOWTIE2_V=2.5.1
 ARG BWA_V=0.7.17
 ARG BWAMEM_V=2.2.1
 ARG PICARD_V=2.27.5
@@ -88,6 +89,12 @@ RUN cd ${BUILD_DIR}; \
     wget -O STAR-${STAR_V}.tar.gz https://github.com/alexdobin/STAR/archive/${STAR_V}.tar.gz && \
     tar ${TAROPTS} -xzf ${BUILD_DIR}/STAR-${STAR_V}.tar.gz && \
     cp -p STAR-${STAR_V}/bin/Linux_x86_64_static/* /usr/local/bin
+
+# Bowtie 2
+RUN cd ${BUILD_DIR}; \
+    wget -O bowtie2-${BOWTIE2_V}.zip "https://sourceforge.net/projects/bowtie-bio/files/bowtie2/${BOWTIE2_V}/bowtie2-${BOWTIE2_V}-linux-x86_64.zip/download" && \
+    unzip bowtie2-${BOWTIE2_V}.zip && \
+    cp -p bowtie2-${BOWTIE2_V}-linux-x86_64/bowtie2* /usr/local/bin
 
 # UCSC Tools
 RUN cd /usr/local/bin; \
