@@ -8,7 +8,7 @@ not intended for external use._
 
 ### What It Does
 
-This pipeline will align a set of FASTQ files using BWA, BWA-mem or STAR, single
+This pipeline will align a set of FASTQ files using BWA, BWA-mem2, Bowtie2 or STAR, single
 read or paired end. It is supplied with a Singularity image to run the necessary
 software. It requires a reference data structure for the genomes to align to as
 documented [in the documentation for our reference data pipeline](https://internal-bioinformatics.cruk.cam.ac.uk/docs/referencegenomes/main.html).
@@ -129,6 +129,21 @@ in `nextflow.config`.
 Insert size metrics are only relevant for paired end alignments, so when aligning
 single end the switch above has no effect: they will not be produced.
 
+There are parameters for passing additional arguments to each aligner. These are:
+
+1. `bwaAlnOptions` - options for the "aln" command of BWA.
+2. `bwaSamOptions` - options for the "samse" or "sampe" command of BWA.
+3. `bwamem2Options` - options for BWAmem2.
+4. `bowtie2Options` - options for Bowtie 2.
+5. `starOptions` - options for STAR.
+
+These additional options are given to the command for the respective aligners as is.
+By default, all of these parameters are empty. Take care not to include arguments that
+set input and output files or the number of threads/cores, as these switches will
+already be utilised by the pipeline. STAR in particular has some options already used
+in its shell script that you might want to avoid (see `templates/STAR.sh` in the
+pipeline code to see what is used).
+
 #### Command Line Switches
 
 All of the parameters defined in `nextflow.config` can be overridden on the command
@@ -180,7 +195,8 @@ in the reference. Only needed if creating coverage files.
 Only needed if calculating RNA-seq metrics.
 4. `bwaIndex`: The path and prefix to the BWA reference. Only needed when running classic BWA.
 5. `bwamem2Index`: The path and prefix to the BWAmem2 reference. Only needed when running BWAmem2.
-6. `starIndex`: The path to the STAR reference directory. Only needed when running STAR.
+6. `bowtie2Index`: The path and prefix to the Bowtie2 reference. Only needed when running Bowtie 2.
+7. `starIndex`: The path to the STAR reference directory. Only needed when running STAR.
 
 ### Singularity Cache
 
