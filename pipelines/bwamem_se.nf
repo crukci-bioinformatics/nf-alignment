@@ -2,8 +2,6 @@
  * BWAmem single read inner work flow.
  */
 
-params.aligner = "bwamem"
-
 include { sizeOf } from "../modules/nextflow-support/functions"
 include { basenameExtractor } from "../components/functions"
 include { bwamem2IndexPath } from "../components/defaults"
@@ -11,7 +9,7 @@ include { split_fastq } from "../processes/fastq"
 include { bwa_mem } from "../processes/bwamem"
 include { singleread } from "./singleread"
 
-workflow bwamem_se
+workflow bwamem_se_wf
 {
     take:
         csv_channel

@@ -10,7 +10,7 @@ include { logException } from '../modules/nextflow-support/debugging'
 
 include {
     fastaReferencePath; genomeSizesPath; referenceRefFlatPath;
-    bwaIndexPath; bwamem2IndexPath; starIndexPath;
+    bwaIndexPath; bwamem2IndexPath; bowtie2IndexPath; starIndexPath;
     pairedEnd; rnaseqStrandSpecificity
 } from "./defaults"
 
@@ -29,7 +29,7 @@ def checkParameters(params)
 
         if (!containsKey('aligner'))
         {
-            log.error "Aligner not specified. Use --aligner with one of 'bwa', 'bwamem', 'star'."
+            log.error "Aligner not specified. Use --aligner with one of 'bwa', 'bwamem', 'bowtie', 'star'."
             errors = true
         }
         if (!containsKey('endType'))
@@ -79,7 +79,24 @@ def checkParameters(params)
             case 'bwamem':
             case 'bwa_mem':
             case 'bwamem2':
+            case 'bwa_mem2':
                 if (!containsKey('bwamem2Index'))
+                {
+                    if (!containsKey('referenceRoot'))
+                    {
+                        if (!referenceRootWarned)
+                        {
+                            log.error referenceRootWarning
+                            referenceRootWarned = true
+                        }
+                        errors = true
+                    }
+                }
+                break
+
+            case 'bowtie':
+            case 'bowtie2':
+                if (!containsKey('bowtie2Index'))
                 {
                     if (!containsKey('referenceRoot'))
                     {
@@ -225,9 +242,21 @@ def checkParameters(params)
 
         case 'bwamem':
         case 'bwa_mem':
+        case 'bwamem2':
+        case 'bwa_mem2':
             if (!Files.exists(file("${bwamem2IndexPath()}.pac")))
             {
                 log.error "BWAmem index files '${bwamem2IndexPath()}' do not exist."
+                errors = true
+            }
+            break
+
+        case 'bowtie':
+        case 'bowtie2':
+            if (!Files.exists(file("${bowtie2IndexPath()}.1.bt2")) &&
+                !Files.exists(file("${bowtie2IndexPath()}.1.bt2l")))
+            {
+                log.error "Bowtie index files '${bowtie2IndexPath()}*' do not exist."
                 errors = true
             }
             break
@@ -265,13 +294,19 @@ def displayParameters()
     switch (params.aligner.toLowerCase())
     {
         case 'bwa':
-            log.info "BWA index: ${bwaIndexPath()}"
+            log.info "BWA index: ${bwaIndexPath()}*"
             break
 
         case 'bwamem':
         case 'bwa_mem':
         case 'bwamem2':
-            log.info "BWAmem2 index: ${bwamem2IndexPath()}"
+        case 'bwa_mem2':
+            log.info "BWAmem2 index: ${bwamem2IndexPath()}*"
+            break
+
+        case 'bowtie':
+        case 'bowtie2':
+            log.info "Bowtie2 index: ${bowtie2IndexPath()}*"
             break
 
         case 'star':

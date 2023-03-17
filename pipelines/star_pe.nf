@@ -2,14 +2,12 @@
  * STAR paired end pipeline inner work flow.
  */
 
-params.aligner = "star"
-
 include { basenameExtractor } from "../components/functions"
 include { starIndexPath } from "../components/defaults"
 include { STAR } from "../processes/star"
 include { pairedend } from "./pairedend"
 
-workflow star_pe
+workflow star_pe_wf
 {
     take:
         csv_channel

@@ -11,6 +11,7 @@ trap clean_up SIGHUP SIGINT SIGTERM
 mkdir -p "!{basename}"
 
 STAR \
+    !{params.starOptions} \
     --runMode alignReads \
     --runThreadN !{task.cpus} \
     --outBAMcompression 5 \

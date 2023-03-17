@@ -1,22 +1,23 @@
 /*
- * BWA single read inner work flow.
+ * BWAmem single read inner work flow.
  */
 
 include { sizeOf } from "../modules/nextflow-support/functions"
-include { basenameExtractor } from "../components/functions"
-include { bwaIndexPath } from "../components/defaults"
+include { basenameExtractor; extractChunkNumber } from "../components/functions"
+include { bowtie2IndexPath } from "../components/defaults"
 include { split_fastq } from "../processes/fastq"
-include { bwa_aln; bwa_samse } from "../processes/bwa"
+include { bowtie_se } from "../processes/bowtie"
 include { singleread } from "./singleread"
 
-workflow bwa_se_wf
+
+workflow bowtie_se_wf
 {
     take:
         csv_channel
 
     main:
-        bwa_index_path = file(bwaIndexPath())
-        bwa_index_channel = channel.of(tuple bwa_index_path.parent, bwa_index_path.name)
+        bowtie2_index_path = file(bowtie2IndexPath())
+        bowtie2_index_channel = channel.of(tuple bowtie2_index_path.parent, bowtie2_index_path.name)
 
         fastq_channel =
             csv_channel
@@ -45,9 +46,13 @@ workflow bwa_se_wf
         per_chunk_channel =
             split_fastq.out
             .transpose()
-            .combine(bwa_index_channel)
+            .map
+            {
+                basename, read, fastq ->
+                tuple basename, extractChunkNumber(fastq), fastq
+            }
+            .combine(bowtie2_index_channel)
 
-        bwa_aln(per_chunk_channel)
-        bwa_samse(bwa_aln.out.combine(bwa_index_channel))
-        singleread(bwa_samse.out, csv_channel, chunk_count_channel)
+        bowtie_se(per_chunk_channel)
+        singleread(bowtie_se.out, csv_channel, chunk_count_channel)
 }

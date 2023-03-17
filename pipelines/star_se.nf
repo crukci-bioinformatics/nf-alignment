@@ -2,14 +2,12 @@
  * STAR single read inner work flow.
  */
 
-params.aligner = "star"
-
 include { basenameExtractor } from "../components/functions"
 include { starIndexPath } from "../components/defaults"
 include { STAR } from "../processes/star"
 include { singleread } from "./singleread"
 
-workflow star_se
+workflow star_se_wf
 {
     take:
         csv_channel

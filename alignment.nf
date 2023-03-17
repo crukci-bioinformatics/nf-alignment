@@ -25,40 +25,53 @@ switch (params.aligner.toLowerCase())
     case 'bwa':
         if (pairedEnd())
         {
-            include { bwa_pe as alignment } from "./pipelines/bwa_pe"
+            include { bwa_pe_wf as alignment } from "./pipelines/bwa_pe"
         }
         else
         {
-            include { bwa_se as alignment } from "./pipelines/bwa_se"
+            include { bwa_se_wf as alignment } from "./pipelines/bwa_se"
         }
         break
 
     case 'bwamem':
     case 'bwa_mem':
     case 'bwamem2':
+    case 'bwa_mem2':
         if (pairedEnd())
         {
-            include { bwamem_pe as alignment } from "./pipelines/bwamem_pe"
+            include { bwamem_pe_wf as alignment } from "./pipelines/bwamem_pe"
         }
         else
         {
-            include { bwamem_se as alignment } from "./pipelines/bwamem_se"
+            include { bwamem_se_wf as alignment } from "./pipelines/bwamem_se"
+        }
+        break
+
+    case 'bowtie':
+    case 'bowtie2':
+        if (pairedEnd())
+        {
+            include { bowtie_pe_wf as alignment } from "./pipelines/bowtie_pe"
+        }
+        else
+        {
+            include { bowtie_se_wf as alignment } from "./pipelines/bowtie_se"
         }
         break
 
     case 'star':
         if (pairedEnd())
         {
-            include { star_pe as alignment } from "./pipelines/star_pe"
+            include { star_pe_wf as alignment } from "./pipelines/star_pe"
         }
         else
         {
-            include { star_se as alignment } from "./pipelines/star_se"
+            include { star_se_wf as alignment } from "./pipelines/star_se"
         }
         break
 
     default:
-        exit 1, "Aligner must be one of 'bwa', 'bwamem' or 'star'."
+        exit 1, "Aligner must be one of 'bwa', 'bwamem', 'bowtie' or 'star'."
 }
 
 displayParameters()

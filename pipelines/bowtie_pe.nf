@@ -1,22 +1,23 @@
 /*
- * BWA paired end pipeline inner work flow.
+ * Bowtie 2 paired end pipeline inner work flow.
  */
 
 include { sizeOf } from "../modules/nextflow-support/functions"
-include { basenameExtractor } from "../components/functions"
-include { bwaIndexPath } from "../components/defaults"
+include { basenameExtractor; extractChunkNumber } from "../components/functions"
+include { bowtie2IndexPath } from "../components/defaults"
 include { split_fastq as split_fastq_1; split_fastq as split_fastq_2 } from "../processes/fastq"
-include { bwa_aln as bwa_aln_1; bwa_aln as bwa_aln_2; bwa_sampe } from "../processes/bwa"
+include { bowtie_pe } from "../processes/bowtie"
 include { pairedend } from "./pairedend"
 
-workflow bwa_pe_wf
+
+workflow bowtie_pe_wf
 {
     take:
         csv_channel
 
     main:
-        bwa_index_path = file(bwaIndexPath())
-        bwa_index_channel = channel.of(tuple bwa_index_path.parent, bwa_index_path.name)
+        bowtie2_index_path = file(bowtie2IndexPath())
+        bowtie2_index_channel = channel.of(tuple bowtie2_index_path.parent, bowtie2_index_path.name)
 
         fastq_channel =
             csv_channel
@@ -28,7 +29,7 @@ workflow bwa_pe_wf
                       file("${params.fastqDir}/${row.Read2}", checkIfExists: true)
             }
 
-        // Split into two channels, one read in each, for BWA aln.
+        // Split into two channels, one read in each, for fastq splitting.
 
         read1_channel =
             fastq_channel
@@ -46,8 +47,6 @@ workflow bwa_pe_wf
                 tuple base, 2, read2
             }
 
-        // Split the files in these channels into chunks.
-
         split_fastq_1(read1_channel)
         split_fastq_2(read2_channel)
 
@@ -63,30 +62,33 @@ workflow bwa_pe_wf
                 tuple basename, sizeOf(fastqFiles)
             }
 
-        // Map these channels so there is a single FASTQ per item in the channel
+        // Flatten the list of files in both channels to have two channels with
+        // a single file per item. Also extract the chunk number from the file name.
 
-        read1_per_chunk_channel =
+        per_chunk_channel_1 =
             split_fastq_1.out
             .transpose()
-            .combine(bwa_index_channel)
+            .map
+            {
+                basename, read, fastq ->
+                tuple basename, extractChunkNumber(fastq), fastq
+            }
 
-        read2_per_chunk_channel =
+        per_chunk_channel_2 =
             split_fastq_2.out
             .transpose()
-            .combine(bwa_index_channel)
+            .map
+            {
+                basename, read, fastq ->
+                tuple basename, extractChunkNumber(fastq), fastq
+            }
 
-        // Align the chunks in independent channels.
+        // Combine these channels by base name and chunk number.
 
-        bwa_aln_1(read1_per_chunk_channel)
-        bwa_aln_2(read2_per_chunk_channel)
+        combined_chunk_channel = per_chunk_channel_1
+            .combine(per_chunk_channel_2, by: 0..1)
+            .combine(bowtie2_index_channel)
 
-        // Combine the output of these two channels into one, grouping on base name and chunk number.
-
-        sampe_channel =
-            bwa_aln_1.out
-            .join(bwa_aln_2.out, by: [0,1], failOnDuplicate: true, failOnMismatch: true)
-            .combine(bwa_index_channel)
-
-        bwa_sampe(sampe_channel)
-        pairedend(bwa_sampe.out, csv_channel, chunk_count_channel)
+        bowtie_pe(combined_chunk_channel)
+        pairedend(bowtie_pe.out, csv_channel, chunk_count_channel)
 }

@@ -3,6 +3,7 @@
 set -o pipefail
 
 bwa samse \
+    !{params.bwaSamOptions} \
     "!{bwaIndexDir}/!{bwaIndexPrefix}" \
     !{saiFile} \
     !{fastqFile} | \

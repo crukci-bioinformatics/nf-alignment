@@ -118,6 +118,22 @@ def bwamem2IndexPath()
 }
 
 /*
+ * Get the path to the Bowtie2 index file.
+ */
+def bowtie2IndexPath()
+{
+    if (params.containsKey('bowtie2Index'))
+    {
+        return params.bwamem2Index
+    }
+
+    params.with
+    {
+        return "${referenceRoot}/${species}/${assembly}/bowtie2-${bowtie2Version}/${shortSpecies}.${assembly}"
+    }
+}
+
+/*
  * Get the path to the STAR index directory.
  */
 def starIndexPath()

@@ -2,8 +2,6 @@
  * BWAmem paired end pipeline inner work flow.
  */
 
-params.aligner = "bwamem"
-
 include { sizeOf } from "../modules/nextflow-support/functions"
 include { basenameExtractor; extractChunkNumber } from "../components/functions"
 include { bwamem2IndexPath } from "../components/defaults"
@@ -12,7 +10,7 @@ include { bwa_mem } from "../processes/bwamem"
 include { pairedend } from "./pairedend"
 
 
-workflow bwamem_pe
+workflow bwamem_pe_wf
 {
     take:
         csv_channel
