@@ -13,7 +13,7 @@ include { extractChunkNumber } from '../components/functions'
 process bwa_mem
 {
     cpus 4
-    memory { 8.GB * task.attempt }
+    memory { 16.GB * task.attempt }
     time 8.hour
     maxRetries 2
 
