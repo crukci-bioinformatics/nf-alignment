@@ -7,7 +7,7 @@
  */
 process split_fastq
 {
-    memory '8MB'
+    memory '1GB'
     time { 12.hour + 1.hour * task.attempt }
 
     input:
