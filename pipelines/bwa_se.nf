@@ -25,7 +25,7 @@ workflow bwa_se_wf
                 row ->
                 tuple basenameExtractor(row.Read1),
                       1,
-                      file("${params.fastqDir}/${row.Read1}", checkIfExists: true)
+                      file("${params.fastqDir}/${row.Read1}", checkIfExists: true, arity: '1')
             }
 
         split_fastq(fastq_channel)

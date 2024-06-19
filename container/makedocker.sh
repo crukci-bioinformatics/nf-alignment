@@ -1,6 +1,6 @@
 #!/bin/sh
 
-TAG="4.2.1"
+TAG="4.3.0"
 REPO="crukcibioinformatics/alignment:$TAG"
 
 sudo docker build --tag "$REPO" --file Dockerfile .

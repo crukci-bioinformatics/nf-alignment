@@ -24,8 +24,8 @@ workflow bwa_pe_wf
             {
                 row ->
                 tuple basenameExtractor(row.Read1),
-                      file("${params.fastqDir}/${row.Read1}", checkIfExists: true),
-                      file("${params.fastqDir}/${row.Read2}", checkIfExists: true)
+                      file("${params.fastqDir}/${row.Read1}", checkIfExists: true, arity: '1'),
+                      file("${params.fastqDir}/${row.Read2}", checkIfExists: true, arity: '1')
             }
 
         // Split into two channels, one read in each, for BWA aln.

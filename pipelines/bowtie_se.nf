@@ -26,7 +26,7 @@ workflow bowtie_se_wf
                 row ->
                 tuple basenameExtractor(row.Read1),
                       1,
-                      file("${params.fastqDir}/${row.Read1}", checkIfExists: true)
+                      file("${params.fastqDir}/${row.Read1}", checkIfExists: true, arity: '1')
             }
 
         split_fastq(fastq_channel)
@@ -42,6 +42,9 @@ workflow bowtie_se_wf
                 basename, read, fastqFiles ->
                 tuple basename, sizeOf(fastqFiles)
             }
+
+        // Flatten the list of files in the channel to have a channel with
+        // a single file per item. Also extract the chunk number from the file name.
 
         per_chunk_channel =
             split_fastq.out

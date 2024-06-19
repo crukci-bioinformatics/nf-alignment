@@ -13,10 +13,10 @@ process STAR
     maxRetries 2
 
     input:
-        tuple val(basename), path(sequenceFiles), path(starIndex)
+        tuple val(basename), val(chunk), path(sequenceFiles), path(starIndex)
 
     output:
-        tuple val(basename), val(0), path(outBam)
+        tuple val(basename), val(chunk), path(outBam)
 
     shell:
         outBam = "${basename}/Aligned.out.bam"

@@ -25,7 +25,7 @@ workflow bwamem_se_wf
                 row ->
                 tuple basenameExtractor(row.Read1),
                       1,
-                      file("${params.fastqDir}/${row.Read1}", checkIfExists: true)
+                      file("${params.fastqDir}/${row.Read1}", checkIfExists: true, arity: '1')
             }
 
         split_fastq(fastq_channel)
@@ -48,7 +48,7 @@ workflow bwamem_se_wf
             .map
             {
                 basename, read, fastq ->
-                tuple basename, [ fastq ]
+                tuple basename, extractChunkNumber(fastq), [ fastq ]
             }
             .combine(bwamem2_index_channel)
 
