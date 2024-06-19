@@ -6,7 +6,7 @@
 
 import static org.apache.commons.lang3.StringUtils.trimToNull
 
-include { javaMemMB; sizeOf; safeName } from "../modules/nextflow-support/functions"
+include { javaMemoryOptions; sizeOf; safeName } from "../modules/nextflow-support/functions"
 include { alignedFileName } from '../components/functions'
 include { rnaseqStrandSpecificity } from '../components/defaults'
 
@@ -90,7 +90,7 @@ process picard_addreadgroups
 
     shell:
         outBam = "${basename}.readgroups.${chunk}.bam"
-        javaMem = javaMemMB(task)
+        javaMem = javaMemoryOptions(task).jvmOpts
 
         def rgcn = trimToNull(sequencingInfo['SequencingCentre'])
         RGCN = !rgcn ? "" : "RGCN=\"${rgcn}\""
@@ -134,8 +134,10 @@ process picard_sortsam
 
     shell:
         outBam = "${basename}.sorted.${chunk}.bam"
-        javaMem = javaMemMB(task)
-        readsInRam = maxReadsInRam(javaMem, 100)
+
+        def memoryInfo = javaMemoryOptions(task)
+        javaMem = memoryInfo.jvmOpts
+        readsInRam = maxReadsInRam(memoryInfo.heap, 100)
 
         template "picard/SortSam.sh"
 }
@@ -158,8 +160,10 @@ process picard_fixmate
 
     shell:
         outBam = "${basename}.fixed.${chunk}.bam"
-        javaMem = javaMemMB(task)
-        readsInRam = maxReadsInRam(javaMem, 100)
+
+        def memoryInfo = javaMemoryOptions(task)
+        javaMem = memoryInfo.jvmOpts
+        readsInRam = maxReadsInRam(memoryInfo.heap, 100)
 
         template "picard/FixMateInformation.sh"
 }
@@ -187,8 +191,10 @@ process picard_merge_or_markduplicates
         outBam = "${alignedFileName(basename)}.bam"
         outBai = "${alignedFileName(basename)}.bai"
         metrics = "${alignedFileName(basename)}.duplication.txt"
-        javaMem = javaMemMB(task)
-        readsInRam = maxReadsInRam(javaMem, 100)
+
+        def memoryInfo = javaMemoryOptions(task)
+        javaMem = memoryInfo.jvmOpts
+        readsInRam = maxReadsInRam(memoryInfo.heap, 100)
 
         if (params.markDuplicates)
         {
@@ -222,7 +228,7 @@ process picard_alignmentmetrics
 
     shell:
         metrics = "${alignedFileName(basename)}.alignment.txt"
-        javaMem = javaMemMB(task)
+        javaMem = javaMemoryOptions(task).jvmOpts
 
         template "picard/CollectAlignmentSummaryMetrics.sh"
 }
@@ -250,7 +256,7 @@ process picard_wgsmetrics
 
     shell:
         metrics = "${alignedFileName(basename)}.wgs.txt"
-        javaMem = javaMemMB(task)
+        javaMem = javaMemoryOptions(task).jvmOpts
 
         template "picard/CollectWgsMetrics.sh"
 }
@@ -276,8 +282,9 @@ process picard_rnaseqmetrics
 
     shell:
         metrics = "${alignedFileName(basename)}.rnaseq.txt"
-        javaMem = javaMemMB(task)
         strandSpecificity = rnaseqStrandSpecificity()
+
+        javaMem = javaMemoryOptions(task).jvmOpts
 
         template "picard/CollectRnaSeqMetrics.sh"
 }
@@ -305,7 +312,8 @@ process picard_insertmetrics
     shell:
         metrics = "${alignedFileName(basename)}.insertsize.txt"
         plot = "${alignedFileName(basename)}.insertsize.pdf"
-        javaMem = javaMemMB(task)
+
+        javaMem = javaMemoryOptions(task).jvmOpts
 
         template "picard/CollectInsertSizeMetrics.sh"
 }
@@ -337,8 +345,10 @@ process sample_merge_or_markduplicates
         outBam = "${alignedFileName(safeSampleName)}.bam"
         outIndex = "${alignedFileName(safeSampleName)}.bai"
         metrics = "${alignedFileName(safeSampleName)}.duplication.txt"
-        javaMem = javaMemMB(task)
-        readsInRam = maxReadsInRam(javaMem, 100)
+
+        def memoryInfo = javaMemoryOptions(task)
+        javaMem = memoryInfo.jvmOpts
+        readsInRam = maxReadsInRam(memoryInfo.heap, 100)
 
         if (params.markDuplicates)
         {
@@ -382,7 +392,8 @@ process sample_alignmentmetrics
     shell:
         safeSampleName = safeName(sampleName)
         metrics = "${alignedFileName(safeSampleName)}.alignment.txt"
-        javaMem = javaMemMB(task)
+
+        javaMem = javaMemoryOptions(task).jvmOpts
 
         template "picard/CollectAlignmentSummaryMetrics.sh"
 }
@@ -412,7 +423,8 @@ process sample_wgsmetrics
     shell:
         safeSampleName = safeName(sampleName)
         metrics = "${alignedFileName(safeSampleName)}.wgs.txt"
-        javaMem = javaMemMB(task)
+
+        javaMem = javaMemoryOptions(task).jvmOpts
 
         template "picard/CollectWgsMetrics.sh"
 }
@@ -440,8 +452,9 @@ process sample_rnaseqmetrics
     shell:
         safeSampleName = safeName(sampleName)
         metrics = "${alignedFileName(safeSampleName)}.rnaseq.txt"
-        javaMem = javaMemMB(task)
         strandSpecificity = rnaseqStrandSpecificity()
+
+        javaMem = javaMemoryOptions(task).jvmOpts
 
         template "picard/CollectRnaSeqMetrics.sh"
 }
@@ -471,7 +484,8 @@ process sample_insertmetrics
         safeSampleName = safeName(sampleName)
         metrics = "${alignedFileName(safeSampleName)}.insertsize.txt"
         plot = "${alignedFileName(safeSampleName)}.insertsize.pdf"
-        javaMem = javaMemMB(task)
+
+        javaMem = javaMemoryOptions(task).jvmOpts
 
         template "picard/CollectInsertSizeMetrics.sh"
 }

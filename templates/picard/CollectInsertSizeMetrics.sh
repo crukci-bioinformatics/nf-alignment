@@ -29,7 +29,7 @@ function clean_up
 trap clean_up SIGHUP SIGINT SIGTERM
 
 java -Djava.io.tmpdir="$TMPDIR" \
--Xms!{javaMem}m -Xmx!{javaMem}m \
+!{javaMem} \
 -jar /usr/local/lib/picard.jar CollectInsertSizeMetrics \
 INPUT=!{inBam} \
 OUTPUT="!{metrics}" \

@@ -5,7 +5,7 @@ LABEL   maintainer="Richard Bowers<richard.bowers@cruk.cam.ac.uk>"
 ARG INSTALL_DIR=/opt
 ARG BUILD_DIR=/var/tmp/alignment_software_build
 
-ARG GROOVY_V=4.0.7
+ARG GROOVY_V=4.0.21
 
 ARG BEDTOOLS_V=2.30.0
 ARG BOWTIE2_V=2.5.1
@@ -18,7 +18,7 @@ ARG STAR_V=2.7.10b
 
 ARG TAROPTS="--no-same-owner --no-same-permissions"
 
-ENV JAVA_HOME=/usr/lib/jvm/jre-17
+ENV JAVA_HOME=/usr/lib/jvm/jre-21
 ENV GROOVY_HOME=${INSTALL_DIR}/groovy-${GROOVY_V}
 ENV PATH=$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
 ENV LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib
@@ -27,7 +27,7 @@ RUN dnf install -y dnf-plugins-core epel-release
 RUN dnf config-manager --set-enabled powertools
 RUN dnf makecache && dnf update -y
 RUN dnf install -y \
-	bzip2 bzip2-devel gcc-c++ git java-17-openjdk-headless \
+	bzip2 bzip2-devel gcc-c++ git java-21-openjdk-headless \
 	libcurl-devel make ncurses-devel openssl-devel python2 \
 	R-core unzip wget xz-devel zlib-devel
 
