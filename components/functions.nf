@@ -2,8 +2,6 @@
  * Miscellaneous helper functions used all over the pipeline.
  */
 
-@Grab('org.apache.commons:commons-lang3:3.12.0')
-
 import static org.apache.commons.lang3.CharUtils.isAsciiAlphanumeric
 
 import java.text.*

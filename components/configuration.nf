@@ -2,7 +2,6 @@
  * Functions used in checking the configuration of the pipeline before it starts.
  */
 
-@Grab('org.apache.commons:commons-csv:1.8')
 import java.nio.file.Files
 import org.apache.commons.csv.*
 
