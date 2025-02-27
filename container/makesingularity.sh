@@ -1,11 +1,11 @@
 #!/bin/sh
 
-TAG="4.3.0"
+TAG="4.3.1"
 REPO="crukcibioinformatics/alignment:$TAG"
+IMAGE="alignment-${TAG}.sif"
 
-sudo rm -f alignment-${TAG}.sif
+sudo rm -f "$IMAGE"
 
-sudo singularity build alignment-${TAG}.sif docker-daemon://${REPO}
-sudo chown $USER alignment-${TAG}.sif
-chmod a-x alignment-${TAG}.sif
-
+sudo singularity build "$IMAGE" docker-daemon://${REPO}
+sudo chown $USER "$IMAGE"
+chmod a-x "$IMAGE"

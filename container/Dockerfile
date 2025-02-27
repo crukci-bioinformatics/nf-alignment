@@ -1,4 +1,4 @@
-FROM    rockylinux:8.6
+FROM    rockylinux:8.9
 
 LABEL   maintainer="Richard Bowers<richard.bowers@cruk.cam.ac.uk>"
 
@@ -7,14 +7,14 @@ ARG BUILD_DIR=/var/tmp/alignment_software_build
 
 ARG GROOVY_V=4.0.21
 
-ARG BEDTOOLS_V=2.30.0
-ARG BOWTIE2_V=2.5.1
-ARG BWA_V=0.7.17
+ARG BEDTOOLS_V=2.31.1
+ARG BOWTIE2_V=2.5.4
+ARG BWA_V=0.7.18
 ARG BWAMEM_V=2.2.1
-ARG PICARD_V=2.27.5
-ARG HTSLIB_V=1.16
-ARG SAMTOOLS_V=1.16.1
-ARG STAR_V=2.7.10b
+ARG PICARD_V=3.3.0
+ARG HTSLIB_V=1.21
+ARG SAMTOOLS_V=1.21
+ARG STAR_V=2.7.11b
 
 ARG TAROPTS="--no-same-owner --no-same-permissions"
 
@@ -72,8 +72,8 @@ RUN cd ${BUILD_DIR}; \
 
 # BWA
 RUN cd ${BUILD_DIR}; \
-    wget https://github.com/lh3/bwa/releases/download/v${BWA_V}/bwa-${BWA_V}.tar.bz2 && \
-    tar ${TAROPTS} -jxf ${BUILD_DIR}/bwa-${BWA_V}.tar.bz2 && \
+    wget -O bwa-${BWA_V}.tar.gz https://github.com/lh3/bwa/archive/refs/tags/v${BWA_V}.tar.gz && \
+    tar ${TAROPTS} -xf ${BUILD_DIR}/bwa-${BWA_V}.tar.gz && \
     cd bwa-${BWA_V} && \
     make && \
     cp -p bwa /usr/local/bin
