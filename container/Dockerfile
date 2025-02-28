@@ -97,9 +97,11 @@ RUN cd ${BUILD_DIR}; \
     cp -p bowtie2-${BOWTIE2_V}-linux-x86_64/bowtie2* /usr/local/bin
 
 # UCSC Tools
+# Newer versions won't run on Rocky8: glibc is tool old.
+# Salmon won't build on Rocky 9 (glibc too new!).
 RUN cd /usr/local/bin; \
-    wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/bedGraphToBigWig; \
-    wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/bedSort; \
+    wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64.v385/bedGraphToBigWig; \
+    wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64.v385/bedSort; \
     chmod a+rx bedGraphToBigWig bedSort
 
 # Picard
