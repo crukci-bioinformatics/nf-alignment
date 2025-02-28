@@ -5,7 +5,7 @@ LABEL   maintainer="Richard Bowers<richard.bowers@cruk.cam.ac.uk>"
 ARG INSTALL_DIR=/opt
 ARG BUILD_DIR=/var/tmp/alignment_software_build
 
-ARG GROOVY_V=4.0.21
+ARG GROOVY_V=4.0.25
 
 ARG BEDTOOLS_V=2.31.1
 ARG BOWTIE2_V=2.5.4
