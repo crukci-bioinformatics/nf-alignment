@@ -1,4 +1,4 @@
-FROM    rockylinux/rockylinux:8.10
+FROM    rockylinux/rockylinux:9.5
 
 LABEL   maintainer="Richard Bowers<richard.bowers@cruk.cam.ac.uk>"
 
@@ -24,14 +24,13 @@ ENV PATH=$JAVA_HOME/bin:$GROOVY_HOME/bin:$PATH
 ENV LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib
 
 RUN dnf install -y dnf-plugins-core epel-release
-RUN dnf config-manager --set-enabled powertools
+RUN dnf config-manager --set-enabled crb
 RUN dnf makecache && dnf update -y
 RUN dnf install -y \
 	bzip2 bzip2-devel gcc-c++ git java-21-openjdk-headless \
-	libcurl-devel make ncurses-devel openssl-devel python2 \
-	R-core unzip wget xz-devel zlib-devel
+	libcurl-devel make ncurses-devel openssl-devel \
+	perl-Sys-Hostname procps-ng unzip wget xz-devel zlib-devel
 
-RUN alternatives --set python /usr/bin/python2
 RUN mkdir -p ${INSTALL_DIR} ${BUILD_DIR}
 
 # Groovy

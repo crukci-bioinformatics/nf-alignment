@@ -1,8 +1,7 @@
 #!/bin/sh
 
-TAG="4.3.1"
-REPO="crukcibioinformatics/alignment:$TAG"
-IMAGE="alignment-${TAG}.sif"
+DIR=$(dirname $0)
+source $DIR/settings.sh
 
 sudo rm -f "$IMAGE"
 
