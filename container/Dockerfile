@@ -27,9 +27,10 @@ RUN dnf install -y dnf-plugins-core epel-release
 RUN dnf config-manager --set-enabled crb
 RUN dnf makecache && dnf update -y
 RUN dnf install -y \
-	bzip2 bzip2-devel gcc-c++ git java-21-openjdk-headless \
-	libcurl-devel make ncurses-devel openssl-devel \
-	perl-Sys-Hostname procps-ng unzip wget xz-devel zlib-devel
+    bzip2 bzip2-devel gcc-c++ git java-21-openjdk-headless \
+    libcurl-devel make ncurses-devel openssl-devel \
+    perl-Sys-Hostname procps-ng R-core \
+    unzip wget xz-devel zlib-devel
 
 RUN mkdir -p ${INSTALL_DIR} ${BUILD_DIR}
 
@@ -49,9 +50,9 @@ RUN cd ${BUILD_DIR}; \
     wget https://github.com/samtools/htslib/releases/download/${HTSLIB_V}/htslib-${HTSLIB_V}.tar.bz2 && \
     tar ${TAROPTS} -jxf htslib-${HTSLIB_V}.tar.bz2
 RUN cd ${BUILD_DIR}/htslib-${HTSLIB_V}; \
-	./configure --prefix=/usr/local && \
-	make && \
-	make install
+    ./configure --prefix=/usr/local && \
+    make && \
+    make install
 
 # samtools
 RUN cd ${BUILD_DIR}; \
