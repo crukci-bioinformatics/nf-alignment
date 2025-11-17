@@ -1,3 +1,3 @@
-TAG="4.3.3"
+TAG="4.3.4"
 REPO="crukcibioinformatics/alignment:$TAG"
 IMAGE="alignment-${TAG}.sif"
