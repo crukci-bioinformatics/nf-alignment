@@ -183,7 +183,7 @@ process picard_merge_or_markduplicates
     output:
         tuple val(basename), path(outBam), emit: merged_bam
         path outBai
-        path metrics optional true
+        path metrics, optional: true
 
     shell:
         outBam = "${alignedFileName(basename)}.bam"
@@ -305,7 +305,7 @@ process picard_insertmetrics
         tuple val(basename), path(inBam), path(referenceFasta)
 
     output:
-        path metrics optional true
+        path metrics, optional: true
 
     shell:
         metrics = "${alignedFileName(basename)}.insertsize.txt"
@@ -335,8 +335,8 @@ process sample_merge_or_markduplicates
 
     output:
         tuple val(sampleName), path(outBam), emit: sample_bam
-        path outIndex optional true
-        path metrics optional true
+        path outIndex, optional: true
+        path metrics, optional: true
 
     shell:
         safeSampleName = safeName(sampleName)
@@ -476,7 +476,7 @@ process sample_insertmetrics
         tuple val(sampleName), path(inBam), path(referenceFasta)
 
     output:
-        path metrics optional true
+        path metrics, optional: true
 
     shell:
         safeSampleName = safeName(sampleName)
