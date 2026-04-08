@@ -1,3 +1,0 @@
-[submodule "modules/nextflow-support"]
-	path = modules/nextflow-support
-	url = https://github.com/crukci-bioinformatics/nextflow-support.git

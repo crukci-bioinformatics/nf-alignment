@@ -2,7 +2,7 @@
  * BWA single read inner work flow.
  */
 
-include { sizeOf } from "../modules/nextflow-support/functions"
+include { sizeOf } from "plugin/nf-crukci-support"
 include { basenameExtractor } from "../components/functions"
 include { bwaIndexPath } from "../components/defaults"
 include { split_fastq } from "../processes/fastq"

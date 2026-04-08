@@ -2,7 +2,7 @@
  * STAR single read inner work flow.
  */
 
-include { sizeOf } from "../modules/nextflow-support/functions"
+include { sizeOf } from "plugin/nf-crukci-support"
 include { basenameExtractor; extractChunkNumber } from "../components/functions"
 include { starIndexPath } from "../components/defaults"
 include { split_fastq } from "../processes/fastq"

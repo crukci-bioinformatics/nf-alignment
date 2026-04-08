@@ -5,7 +5,7 @@
 import java.nio.file.Files
 import org.apache.commons.csv.*
 
-include { logException } from '../modules/nextflow-support/debugging'
+include { logException } from "plugin/nf-crukci-support"
 
 include {
     fastaReferencePath; genomeSizesPath; referenceRefFlatPath;

@@ -2,7 +2,7 @@
  * Processes for calculating genome coverage.
  */
 
-include { safeName } from '../modules/nextflow-support/functions'
+include { safeName } from "plugin/nf-crukci-support"
 include { alignedFileName } from "../components/functions"
 
 /*

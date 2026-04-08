@@ -2,7 +2,7 @@
  * BWA paired end pipeline inner work flow.
  */
 
-include { sizeOf } from "../modules/nextflow-support/functions"
+include { sizeOf } from "plugin/nf-crukci-support"
 include { basenameExtractor } from "../components/functions"
 include { bwaIndexPath } from "../components/defaults"
 include { split_fastq as split_fastq_1; split_fastq as split_fastq_2 } from "../processes/fastq"

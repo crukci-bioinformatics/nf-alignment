@@ -2,8 +2,6 @@
  * Miscellaneous helper functions used all over the pipeline.
  */
 
-import static org.apache.commons.lang3.CharUtils.isAsciiAlphanumeric
-
 import java.text.*
 
 /*

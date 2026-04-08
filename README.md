@@ -21,6 +21,21 @@ then optionally merge files belonging to the same sample into one BAM per sample
 which then also have alignment metrics generated for them. Then, optionally,
 _bedgraph_ and _bigwig_ coverage files are generated.
 
+### Prerequisite
+
+Version 4.4+ uses the [nf-crukci-support plugin](https://github.com/crukci-bioinformatics/nf-crukci-support).
+At the present time this plugin isn't part of the standard Nextflow plugins. The simplest way to fetch
+the plugin correctly is to set the `NXF_PLUGINS_TEST_REPOSITORY` environment variable to include our own `plugins.json`.
+
+```BASH
+export NXF_PLUGINS_TEST_REPOSITORY="https://github.com/crukci-bioinformatics/nextflow-plugins/raw/refs/heads/master/plugins.json,https://raw.githubusercontent.com/nextflow-io/plugins/main/plugins.json"
+```
+
+Probably best put this into your `.bashrc`.
+
+Nextflow will display a warning that this is set and it's for development purposes only. You can ignore this
+warning.
+
 ### Running the Pipeline
 
 The pipeline requires Nextflow to be available on your system. Instructions for

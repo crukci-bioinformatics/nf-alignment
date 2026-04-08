@@ -55,6 +55,4 @@ ASSUME_SORTED=true \
 VALIDATION_STRINGENCY=SILENT \
 TMP_DIR="$TMPDIR"
 
-groovy "!{projectDir}/modules/nextflow-support/outOfMemoryCheck.groovy" $?
-
 clean_up $?

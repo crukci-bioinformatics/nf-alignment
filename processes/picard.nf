@@ -4,7 +4,7 @@
 
 import static org.apache.commons.lang3.StringUtils.trimToNull
 
-include { javaMemoryOptions; sizeOf; safeName } from "../modules/nextflow-support/functions"
+include { javaMemoryOptions; sizeOf; safeName } from "plugin/nf-crukci-support"
 include { alignedFileName } from '../components/functions'
 include { rnaseqStrandSpecificity } from '../components/defaults'
 
