@@ -11,8 +11,12 @@ include { rnaseqStrandSpecificity } from '../components/defaults'
 /**
  * Calculate the maximum number of reads to hold in RAM for Picard sorting
  * tasks based on memory allocated to the task and the read length.
+ *
+ * @param available A MemoryUnit instance giving the amount of available
+ * memory for the Java heap.
+ * @param readLength The read length.
  */
-def maxReadsInRam(availableMB, readLength)
+def maxReadsInRam(available, readLength)
 {
     /*
      * See http://broadinstitute.github.io/picard/faq.html question 2 for notes
@@ -58,6 +62,8 @@ def maxReadsInRam(availableMB, readLength)
      * scale for megabytes as we shouldn't assume a round number of GB for the task.
      */
 
+    assert available instanceof nextflow.util.MemoryUnit : "available memory must be given as a MemoryUnit"
+
     final def allocationPerRead = 4000.0  // bytes
     final def bytesPerBase = 29.41176
     final def overheadPerRead = 1059.0    // bytes
@@ -67,7 +73,7 @@ def maxReadsInRam(availableMB, readLength)
 
     final def readsPerGB = 250000 * allocationRatio    // reads / gb
     final def readsPerMB = readsPerGB / 1024           // reads / mb
-    final def totalReads = availableMB * readsPerMB    // mb * reads/mb to give reads
+    final def totalReads = available.mega * readsPerMB    // mb * reads/mb to give reads
 
     return totalReads as long
 }
