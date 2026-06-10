@@ -22,7 +22,7 @@ process sample_genomecoverage
         tuple val(sampleName), path(inBam), path(genomeSizes)
 
     output:
-        tuple val(sampleName), path(bedgraph), path(genomeSizes)
+        tuple val(sampleName), path("${alignedFileName(safeName(sampleName))}.bedgraph"), path(genomeSizes)
 
     shell:
         safeSampleName = safeName(sampleName)
@@ -41,7 +41,7 @@ process sample_bedsort
         tuple val(sampleName), path(bedgraph), path(genomeSizes)
 
     output:
-        tuple val(sampleName), path(sortedBed), path(genomeSizes)
+        tuple val(sampleName), path("${alignedFileName(safeName(sampleName))}.sorted.bed"), path(genomeSizes)
 
     shell:
         safeSampleName = safeName(sampleName)
@@ -62,7 +62,7 @@ process sample_bedgraphtobigwig
         tuple val(sampleName), path(sortedBed), path(genomeSizes)
 
     output:
-        tuple val(sampleName), path(bigwig)
+        tuple val(sampleName), path("${alignedFileName(safeName(sampleName))}.bigwig")
 
     shell:
         safeSampleName = safeName(sampleName)

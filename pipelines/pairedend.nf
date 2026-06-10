@@ -1,6 +1,10 @@
 /*
  * Post alignment work flow for paired end alignment.
  * The input to this work flow should be the aligned BAM files from the aligner work flow.
+ *
+ * Process calls return their outputs directly as channel values rather than using
+ * the .out accessor or the | pipe operator, making the data flow explicit and
+ * compatible with typed workflow declarations.
  */
 
 include {
@@ -27,9 +31,9 @@ workflow pairedend
         chunk_count_channel
 
     main:
-        reference_fasta_channel = channel.fromPath(fastaReferencePath())
-        genome_sizes_channel = channel.fromPath(genomeSizesPath())
-        reference_refflat_channel = channel.fromPath(referenceRefFlatPath())
+        reference_fasta_channel    = channel.fromPath(fastaReferencePath())
+        genome_sizes_channel       = channel.fromPath(genomeSizesPath())
+        reference_refflat_channel  = channel.fromPath(referenceRefFlatPath())
 
         // Add sequencing info back to the channel for read groups.
         // It is available from sequencing_info_channel, the rows from the CSV file.
@@ -37,14 +41,15 @@ workflow pairedend
             alignment_channel
             .combine(sequencing_info_channel.map { tuple basenameExtractor(it.Read1), it }, by: 0)
 
-        picard_addreadgroups(read_groups_channel) | picard_fixmate
+        def rg_bams    = picard_addreadgroups(read_groups_channel)
+        def fixed_bams = picard_fixmate(rg_bams)
 
         // Group the outputs by base name. Use the groupKey function to
         // allow things to run when each group is complete, rather than
         // waiting for everything.
 
         merge_channel =
-            picard_fixmate.out
+            fixed_bams
             .combine(chunk_count_channel, by: 0)
             .map {
                 basename, bam, chunkCount ->
@@ -52,9 +57,9 @@ workflow pairedend
             }
             .groupTuple()
 
-        picard_merge_or_markduplicates(merge_channel)
+        mergeResult = picard_merge_or_markduplicates(merge_channel)
 
-        picard_with_reference = picard_merge_or_markduplicates.out.merged_bam.combine(reference_fasta_channel)
+        picard_with_reference = mergeResult.merged_bam.combine(reference_fasta_channel)
 
         picard_alignmentmetrics(picard_with_reference)
         picard_wgsmetrics(picard_with_reference, false)
@@ -64,13 +69,13 @@ workflow pairedend
         // Join the output of merge or mark duplicates with the sequencing info
         // by base name.
         with_info_channel =
-            picard_merge_or_markduplicates.out.merged_bam
+            mergeResult.merged_bam
             .combine(sequencing_info_channel.map { tuple basenameExtractor(it.Read1), it }, by: 0)
 
-        make_safe_for_merging(with_info_channel)
+        def safe_for_merge = make_safe_for_merging(with_info_channel)
 
-        // Map to the sample name and collection BAM files for that sample.
-        safe_sample_channel = make_safe_for_merging.out
+        // Map to the sample name and collect BAM files for that sample.
+        safe_sample_channel = safe_for_merge
             .map {
                 basename, bam, sequencingInfo ->
                 tuple sequencingInfo.SampleName, bam
@@ -97,16 +102,22 @@ workflow pairedend
             }
             .groupTuple()
 
-        sample_merge_or_markduplicates(sample_merge_channel)
+        sampleMergeResult = sample_merge_or_markduplicates(sample_merge_channel)
 
-        sample_with_reference = sample_merge_or_markduplicates.out.sample_bam.combine(reference_fasta_channel)
+        sample_with_reference = sampleMergeResult.sample_bam.combine(reference_fasta_channel)
 
         sample_alignmentmetrics(sample_with_reference)
         sample_wgsmetrics(sample_with_reference, false)
         sample_rnaseqmetrics(sample_with_reference.combine(reference_refflat_channel))
         sample_insertmetrics(sample_with_reference)
 
-        sample_with_sizes = sample_merge_or_markduplicates.out.sample_bam.combine(genome_sizes_channel)
+        sample_with_sizes = sampleMergeResult.sample_bam.combine(genome_sizes_channel)
 
-        sample_genomecoverage(sample_with_sizes) | sample_bedsort | sample_bedgraphtobigwig
+        def covOut  = sample_genomecoverage(sample_with_sizes)
+        def sortOut = sample_bedsort(covOut)
+        sample_bedgraphtobigwig(sortOut)
+
+    emit:
+        bams        = mergeResult.merged_bam
+        sample_bams = sampleMergeResult.sample_bam
 }

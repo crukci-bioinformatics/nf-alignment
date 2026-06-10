@@ -16,7 +16,7 @@ process STAR
         tuple val(basename), val(chunk), path(sequenceFiles), path(starIndex)
 
     output:
-        tuple val(basename), val(chunk), path(outBam)
+        tuple val(basename), val(chunk), path("${basename}/Aligned.out.bam")
 
     shell:
         outBam = "${basename}/Aligned.out.bam"

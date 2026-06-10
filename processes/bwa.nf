@@ -1,8 +1,9 @@
 /*
  * Processes for running classic BWA.
+ *
+ * BlankSeparatedList is accessed via NfUtils.blankSepList() in lib/NfUtils.groovy
+ * because import declarations are not permitted in strict-parser Nextflow scripts.
  */
-
-import nextflow.util.BlankSeparatedList
 
 include { extractChunkNumber } from '../components/functions'
 
@@ -17,11 +18,10 @@ process bwa_aln
         tuple val(basename), val(read), path(fastqFile), path(bwaIndexDir), val(bwaIndexPrefix)
 
     output:
-        tuple val(basename), val(chunk), path(outSai), path(outFastq)
+        tuple val(basename), val(chunk), path("${basename}.r_${read}.${chunk}.sai"), path(outFastq)
 
     shell:
         chunk = extractChunkNumber(fastqFile)
-
         outFastq = fastqFile.name
         outSai = "${basename}.r_${read}.${chunk}.sai"
         template "bwa/bwaaln.sh"
@@ -39,7 +39,7 @@ process bwa_samse
         tuple val(basename), val(chunk), path(saiFile), path(fastqFile), path(bwaIndexDir), val(bwaIndexPrefix)
 
     output:
-        tuple val(basename), val(chunk), path(outBam)
+        tuple val(basename), val(chunk), path("${basename}.bwa.${chunk}.bam")
 
     shell:
         outBam = "${basename}.bwa.${chunk}.bam"
@@ -61,14 +61,13 @@ process bwa_sampe
               path(bwaIndexDir), val(bwaIndexPrefix)
 
     output:
-        tuple val(basename), val(chunk), path(outBam)
+        tuple val(basename), val(chunk), path("${basename}.bwa.${chunk}.bam")
 
     shell:
         // Lists need to explicitly be BlankSeparatedLists to render correctly
         // in the expansion of the sampe template. Regular lists add square brackets.
-
-        saiFiles = new BlankSeparatedList(saiFile1, saiFile2)
-        fastqFiles = new BlankSeparatedList(fastqFile1, fastqFile2)
+        saiFiles   = NfUtils.blankSepList(saiFile1, saiFile2)
+        fastqFiles = NfUtils.blankSepList(fastqFile1, fastqFile2)
         outBam = "${basename}.bwa.${chunk}.bam"
         template "bwa/bwasampe.sh"
 }

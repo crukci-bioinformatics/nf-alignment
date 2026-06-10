@@ -1,12 +1,25 @@
 /*
  * Picard tools.
+ *
+ * trimToNull() was previously obtained via a static import of
+ * org.apache.commons.lang3.StringUtils.  Import declarations are not permitted
+ * in strict-parser Nextflow scripts, so an equivalent local definition is
+ * provided below instead.
  */
-
-import static org.apache.commons.lang3.StringUtils.trimToNull
 
 include { javaMemoryOptions; sizeOf; safeName } from "plugin/nf-crukci-support"
 include { alignedFileName } from '../components/functions'
 include { rnaseqStrandSpecificity } from '../components/defaults'
+
+/*
+ * Equivalent of Apache Commons StringUtils.trimToNull: returns null when the
+ * input is null, empty, or contains only whitespace; otherwise returns the
+ * trimmed string.
+ */
+def trimToNull(s)
+{
+    s?.trim() ?: null
+}
 
 /**
  * Calculate the maximum number of reads to hold in RAM for Picard sorting

@@ -1,0 +1,277 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "nf-alignment pipeline parameters",
+    "description": "Nextflow pipeline for aligning sequencing data using BWA, BWAmem2, Bowtie2 or STAR.",
+    "type": "object",
+    "$defs": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": [],
+            "properties": {
+                "alignmentCSV": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to the CSV file containing FASTQ file information and metadata.",
+                    "default": "${launchDir}/alignment.csv"
+                },
+                "fastqDir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Directory containing input FASTQ files.",
+                    "default": "${launchDir}/fastq"
+                },
+                "bamDir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Directory where aligned BAM files will be written.",
+                    "default": "${launchDir}/bam"
+                },
+                "sampleBamDir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Directory where merged sample BAM files and coverage files will be written.",
+                    "default": "${launchDir}/samplebam"
+                }
+            }
+        },
+        "alignment_options": {
+            "title": "Alignment options",
+            "type": "object",
+            "description": "Options controlling alignment processing.",
+            "required": [
+                "aligner",
+                "endType"
+            ],
+            "properties": {
+                "aligner": {
+                    "type": "string",
+                    "description": "Alignment tool to use for mapping reads to the reference genome.",
+                    "enum": [
+                        "bwa",
+                        "bwamem",
+                        "bwa_mem",
+                        "bwamem2",
+                        "bwa_mem2",
+                        "bowtie",
+                        "bowtie2",
+                        "star"
+                    ]
+                },
+                "endType": {
+                    "type": "string",
+                    "description": "Whether the sequencing is single-read or paired-end.",
+                    "enum": [ "se", "sr", "pe" ]
+                },
+                "markDuplicates": {
+                    "type": "boolean",
+                    "description": "Whether to mark PCR duplicates in the aligned BAM files.",
+                    "default": true
+                },
+                "mergeSamples": {
+                    "type": "boolean",
+                    "description": "Whether to merge FASTQ files belonging to the same sample into a single BAM per sample.",
+                    "default": false
+                },
+                "chunkSize": {
+                    "type": "integer",
+                    "description": "Number of FASTQ reads per chunk when splitting input files.",
+                    "default": 10000000,
+                    "minimum": 1000
+                },
+                "basenameExtractPattern": {
+                    "type": "string",
+                    "description": "Regular expression pattern used to extract the basename from FASTQ file names.",
+                    "default": "(SLX-\\d+\\.\\w+\\.[-\\w]+\\.s_\\d)\\.r_\\d+\\.fq\\.gz"
+                },
+                "basenameCaptureGroup": {
+                    "type": "integer",
+                    "description": "Which capture group from basenameExtractPattern to use as the basename.",
+                    "default": 1,
+                    "minimum": 0
+                }
+            }
+        },
+        "reference_genome_options": {
+            "title": "Reference genome options",
+            "type": "object",
+            "description": "Reference genome and index paths used for alignment.",
+            "required": [
+                "species",
+                "shortSpecies",
+                "assembly"
+            ],
+            "properties": {
+                "species": {
+                    "type": "string",
+                    "description": "Species name with underscores replacing spaces (e.g. 'homo_sapiens')."
+                },
+                "shortSpecies": {
+                    "type": "string",
+                    "description": "Species abbreviation used in file name construction (e.g. 'hsa' for Homo sapiens)."
+                },
+                "assembly": {
+                    "type": "string",
+                    "description": "Genome assembly version (e.g. 'GRCh38', 'GRCm38')."
+                },
+                "referenceRoot": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Root directory path containing reference genome data. Index and annotation paths are derived from this if not set explicitly.",
+                    "default": "/data/reference_data/reference_genomes_2025"
+                },
+                "referenceFasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to the reference genome FASTA file. Derived from referenceRoot, species and assembly if not set."
+                },
+                "bwaIndex": {
+                    "type": "string",
+                    "description": "Path prefix for the BWA reference index. Required when aligner is 'bwa'. Derived from referenceRoot if not set."
+                },
+                "bwamem2Index": {
+                    "type": "string",
+                    "description": "Path prefix for the BWAmem2 reference index. Required when aligner is 'bwamem', 'bwa_mem', 'bwamem2' or 'bwa_mem2'. Derived from referenceRoot if not set."
+                },
+                "bowtie2Index": {
+                    "type": "string",
+                    "description": "Path prefix for the Bowtie2 reference index. Required when aligner is 'bowtie' or 'bowtie2'. Derived from referenceRoot if not set."
+                },
+                "starIndex": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Path to the STAR reference genome directory. Required when aligner is 'star'. Derived from referenceRoot if not set."
+                },
+                "genomeSizes": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to the genome sizes file listing chromosome/contig names and lengths. Required when createCoverage is true. Derived from referenceRoot if not set."
+                },
+                "referenceRefFlat": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to the reference gene annotation in RefFlat format. Required when rnaseqMetrics is true. Derived from referenceRoot if not set."
+                }
+            }
+        },
+        "aligner_specific_options": {
+            "title": "Aligner-specific options",
+            "type": "object",
+            "description": "Additional command-line options passed directly to the alignment tools.",
+            "properties": {
+                "bwaAlnOptions": {
+                    "type": "string",
+                    "description": "Additional command-line options for the BWA 'aln' command (classic BWA only).",
+                    "default": ""
+                },
+                "bwaSamOptions": {
+                    "type": "string",
+                    "description": "Additional command-line options for the BWA 'samse' or 'sampe' command.",
+                    "default": ""
+                },
+                "bwamem2Options": {
+                    "type": "string",
+                    "description": "Additional command-line options for BWAmem2.",
+                    "default": ""
+                },
+                "bowtie2Options": {
+                    "type": "string",
+                    "description": "Additional command-line options for Bowtie2.",
+                    "default": ""
+                },
+                "starOptions": {
+                    "type": "string",
+                    "description": "Additional command-line options for STAR.",
+                    "default": ""
+                }
+            }
+        },
+        "metrics_options": {
+            "title": "Metrics options",
+            "type": "object",
+            "description": "Options controlling which quality metrics are calculated.",
+            "properties": {
+                "alignmentMetrics": {
+                    "type": "boolean",
+                    "description": "Whether to calculate alignment summary metrics for aligned BAM files.",
+                    "default": true
+                },
+                "insertSizeMetrics": {
+                    "type": "boolean",
+                    "description": "Whether to calculate insert size metrics. Applies to paired-end data only.",
+                    "default": true
+                },
+                "wgsMetrics": {
+                    "type": "boolean",
+                    "description": "Whether to calculate whole genome sequencing (WGS) coverage metrics.",
+                    "default": false
+                },
+                "rnaseqMetrics": {
+                    "type": "boolean",
+                    "description": "Whether to calculate RNA-seq metrics using a RefFlat annotation file.",
+                    "default": false
+                },
+                "rnaseqStrandSpecificity": {
+                    "type": "string",
+                    "description": "Strand specificity for RNA-seq metrics calculation. Defaults to SECOND_READ_TRANSCRIPTION_STRAND for paired-end or FIRST_READ_TRANSCRIPTION_STRAND for single-end if not set.",
+                    "enum": [
+                        "",
+                        "NONE",
+                        "FIRST_READ_TRANSCRIPTION_STRAND",
+                        "SECOND_READ_TRANSCRIPTION_STRAND"
+                    ],
+                    "default": ""
+                }
+            }
+        },
+        "coverage_options": {
+            "title": "Coverage options",
+            "type": "object",
+            "description": "Options for generating genome coverage tracks.",
+            "properties": {
+                "createCoverage": {
+                    "type": "boolean",
+                    "description": "Whether to create bedgraph and bigwig coverage files. Only applies when mergeSamples is true.",
+                    "default": false
+                }
+            }
+        },
+        "software_version_options": {
+            "title": "Software version options",
+            "type": "object",
+            "description": "Versions of alignment tools used when constructing reference index directory paths.",
+            "properties": {
+                "bwaVersion": {
+                    "type": "string",
+                    "description": "BWA version used in reference index directory path construction.",
+                    "default": "0.7.19"
+                },
+                "bwamem2Version": {
+                    "type": "string",
+                    "description": "BWAmem2 version used in reference index directory path construction.",
+                    "default": "2.3"
+                },
+                "bowtie2Version": {
+                    "type": "string",
+                    "description": "Bowtie2 version used in reference index directory path construction.",
+                    "default": "2.5.5"
+                },
+                "starVersion": {
+                    "type": "string",
+                    "description": "STAR version used in reference index directory path construction.",
+                    "default": "2.7.11b"
+                }
+            }
+        }
+    },
+    "allOf": [
+        { "$ref": "#/$defs/input_output_options" },
+        { "$ref": "#/$defs/alignment_options" },
+        { "$ref": "#/$defs/reference_genome_options" },
+        { "$ref": "#/$defs/aligner_specific_options" },
+        { "$ref": "#/$defs/metrics_options" },
+        { "$ref": "#/$defs/coverage_options" },
+        { "$ref": "#/$defs/software_version_options" }
+    ]
+}

@@ -1,9 +1,10 @@
 /*
  * Functions used in checking the configuration of the pipeline before it starts.
+ *
+ * Java/Groovy imports are not permitted in strict-parser Nextflow scripts.
+ * Code that requires third-party classes (Apache Commons CSV, java.nio.file.Files)
+ * lives in lib/APUtils.groovy and is called as static methods below.
  */
-
-import java.nio.file.Files
-import org.apache.commons.csv.*
 
 include { logException } from "plugin/nf-crukci-support"
 
@@ -58,76 +59,60 @@ def checkParameters(params)
             return false
         }
 
-        switch (aligner.toLowerCase())
+        def alignerLc = aligner.toLowerCase()
+
+        if (alignerLc == 'bwa')
         {
-            case 'bwa':
-                if (!containsKey('bwaIndex'))
+            if (!containsKey('bwaIndex') && !containsKey('referenceRoot'))
+            {
+                if (!referenceRootWarned)
                 {
-                    if (!containsKey('referenceRoot'))
-                    {
-                        if (!referenceRootWarned)
-                        {
-                            log.error referenceRootWarning
-                            referenceRootWarned = true
-                        }
-                        errors = true
-                    }
+                    log.error referenceRootWarning
+                    referenceRootWarned = true
                 }
-                break
-
-            case 'bwamem':
-            case 'bwa_mem':
-            case 'bwamem2':
-            case 'bwa_mem2':
-                if (!containsKey('bwamem2Index'))
-                {
-                    if (!containsKey('referenceRoot'))
-                    {
-                        if (!referenceRootWarned)
-                        {
-                            log.error referenceRootWarning
-                            referenceRootWarned = true
-                        }
-                        errors = true
-                    }
-                }
-                break
-
-            case 'bowtie':
-            case 'bowtie2':
-                if (!containsKey('bowtie2Index'))
-                {
-                    if (!containsKey('referenceRoot'))
-                    {
-                        if (!referenceRootWarned)
-                        {
-                            log.error referenceRootWarning
-                            referenceRootWarned = true
-                        }
-                        errors = true
-                    }
-                }
-                break
-
-            case 'star':
-                if (!containsKey('starIndex'))
-                {
-                    if (!containsKey('referenceRoot'))
-                    {
-                        if (!referenceRootWarned)
-                        {
-                            log.error referenceRootWarning
-                            referenceRootWarned = true
-                        }
-                        errors = true
-                    }
-                }
-                break
-
-            default:
-                log.error "Aligner must be one of 'bwa', 'bwamem' or 'star'."
                 errors = true
-                break
+            }
+        }
+        else if (alignerLc in ['bwamem', 'bwa_mem', 'bwamem2', 'bwa_mem2'])
+        {
+            if (!containsKey('bwamem2Index') && !containsKey('referenceRoot'))
+            {
+                if (!referenceRootWarned)
+                {
+                    log.error referenceRootWarning
+                    referenceRootWarned = true
+                }
+                errors = true
+            }
+        }
+        else if (alignerLc in ['bowtie', 'bowtie2'])
+        {
+            if (!containsKey('bowtie2Index') && !containsKey('referenceRoot'))
+            {
+                if (!referenceRootWarned)
+                {
+                    log.error referenceRootWarning
+                    referenceRootWarned = true
+                }
+                errors = true
+            }
+        }
+        else if (alignerLc == 'star')
+        {
+            if (!containsKey('starIndex') && !containsKey('referenceRoot'))
+            {
+                if (!referenceRootWarned)
+                {
+                    log.error referenceRootWarning
+                    referenceRootWarned = true
+                }
+                errors = true
+            }
+        }
+        else
+        {
+            log.error "Aligner must be one of 'bwa', 'bwamem', 'bowtie' or 'star'."
+            errors = true
         }
     }
 
@@ -148,61 +133,44 @@ def checkParameters(params)
         // Check if reference files and directories are set. If not, default to our
         // standard structure.
 
-        if (!containsKey('referenceFasta'))
+        if (!containsKey('referenceFasta') && !containsKey('referenceRoot'))
         {
-            if (!containsKey('referenceRoot'))
+            if (!referenceRootWarned)
             {
-                if (!referenceRootWarned)
-                {
-                    log.error referenceRootWarning
-                    referenceRootWarned = true
-                }
-                errors = true
+                log.error referenceRootWarning
+                referenceRootWarned = true
             }
+            errors = true
         }
 
-        if (createCoverage && !containsKey('genomeSizes'))
+        if (createCoverage && !containsKey('genomeSizes') && !containsKey('referenceRoot'))
         {
-            if (!containsKey('referenceRoot'))
+            if (!referenceRootWarned)
             {
-                if (!referenceRootWarned)
-                {
-                    log.error referenceRootWarning
-                    referenceRootWarned = true
-                }
-                errors = true
+                log.error referenceRootWarning
+                referenceRootWarned = true
             }
+            errors = true
         }
 
         if (rnaseqMetrics)
         {
-            if (!containsKey('referenceRefFlat'))
+            if (!containsKey('referenceRefFlat') && !containsKey('referenceRoot'))
             {
-                if (!containsKey('referenceRoot'))
+                if (!referenceRootWarned)
                 {
-                    if (!referenceRootWarned)
-                    {
-                        log.error referenceRootWarning
-                        referenceRootWarned = true
-                    }
-                    errors = true
+                    log.error referenceRootWarning
+                    referenceRootWarned = true
                 }
+                errors = true
             }
 
-            switch (rnaseqStrandSpecificity.toUpperCase())
+            def validStrand = [ 'NONE', 'FIRST_READ_TRANSCRIPTION_STRAND', 'SECOND_READ_TRANSCRIPTION_STRAND' ]
+            def validStrandValues = [ '', validStrand ].flatten()
+            if (!validStrandValues.contains(rnaseqStrandSpecificity.toUpperCase()))
             {
-                // When none explicitly set, a default according to paired end or single read is supplied.
-                // Otherwise these are acceptable values.
-                case '':
-                case 'NONE':
-                case 'FIRST_READ_TRANSCRIPTION_STRAND':
-                case 'SECOND_READ_TRANSCRIPTION_STRAND':
-                    break
-
-                default:
-                    log.error "RNA Seq strand specificity invalid [rnaseqStrandSpecificity]. " +
-                              "Must be one of NONE, FIRST_READ_TRANSCRIPTION_STRAND, SECOND_READ_TRANSCRIPTION_STRAND"
-                    errors = true
+                log.error "RNA Seq strand specificity invalid [rnaseqStrandSpecificity]. Must be one of ${validStrand.join(', ')}."
+                errors = true
             }
         }
     }
@@ -214,59 +182,56 @@ def checkParameters(params)
 
     // Make sure required reference files are available.
 
-    if (!Files.exists(file(fastaReferencePath())))
+    if (!file(fastaReferencePath()).exists())
     {
         log.error "FASTQ reference file '${fastaReferencePath()}' does not exist."
         errors = true
     }
-    if (params.createCoverage && !Files.exists(file(genomeSizesPath())))
+    if (params.createCoverage && !file(genomeSizesPath()).exists())
     {
         log.error "Genome sizes file '${genomeSizesPath()}' does not exist."
         errors = true
     }
-    if (params.rnaseqMetrics && !Files.exists(file(referenceRefFlatPath())))
+    if (params.rnaseqMetrics && !file(referenceRefFlatPath()).exists())
     {
         log.error "Reference annotation refflat file '${referenceRefFlatPath()}' does not exist."
         errors = true
     }
-    switch (params.aligner)
+
+    def alignerLc = params.aligner.toLowerCase()
+
+    if (alignerLc == 'bwa')
     {
-        case 'bwa':
-            if (!Files.exists(file("${bwaIndexPath()}.pac")))
-            {
-                log.error "BWA index files '${bwaIndexPath()}' do not exist."
-                errors = true
-            }
-            break
-
-        case 'bwamem':
-        case 'bwa_mem':
-        case 'bwamem2':
-        case 'bwa_mem2':
-            if (!Files.exists(file("${bwamem2IndexPath()}.pac")))
-            {
-                log.error "BWAmem index files '${bwamem2IndexPath()}' do not exist."
-                errors = true
-            }
-            break
-
-        case 'bowtie':
-        case 'bowtie2':
-            if (!Files.exists(file("${bowtie2IndexPath()}.1.bt2")) &&
-                !Files.exists(file("${bowtie2IndexPath()}.1.bt2l")))
-            {
-                log.error "Bowtie index files '${bowtie2IndexPath()}*' do not exist."
-                errors = true
-            }
-            break
-
-        case 'star':
-            if (!Files.isDirectory(file(starIndexPath())))
-            {
-                log.error "STAR genome directory '${starIndexPath()}' does not exist."
-                errors = true
-            }
-            break
+        if (!file("${bwaIndexPath()}.pac").exists())
+        {
+            log.error "BWA index files '${bwaIndexPath()}' do not exist."
+            errors = true
+        }
+    }
+    else if (alignerLc in ['bwamem', 'bwa_mem', 'bwamem2', 'bwa_mem2'])
+    {
+        if (!file("${bwamem2IndexPath()}.pac").exists())
+        {
+            log.error "BWAmem index files '${bwamem2IndexPath()}' do not exist."
+            errors = true
+        }
+    }
+    else if (alignerLc in ['bowtie', 'bowtie2'])
+    {
+        if (!file("${bowtie2IndexPath()}.1.bt2").exists() &&
+            !file("${bowtie2IndexPath()}.1.bt2l").exists())
+        {
+            log.error "Bowtie index files '${bowtie2IndexPath()}*' do not exist."
+            errors = true
+        }
+    }
+    else if (alignerLc == 'star')
+    {
+        if (!file(starIndexPath()).isDirectory())
+        {
+            log.error "STAR genome directory '${starIndexPath()}' does not exist."
+            errors = true
+        }
     }
 
     return !errors
@@ -290,27 +255,24 @@ def displayParameters()
         log.info "Reference annotations (refflat): ${referenceRefFlatPath()}"
         log.info "Strand specificity: ${rnaseqStrandSpecificity()}"
     }
-    switch (params.aligner.toLowerCase())
+
+    def alignerLc = params.aligner.toLowerCase()
+
+    if (alignerLc == 'bwa')
     {
-        case 'bwa':
-            log.info "BWA index: ${bwaIndexPath()}*"
-            break
-
-        case 'bwamem':
-        case 'bwa_mem':
-        case 'bwamem2':
-        case 'bwa_mem2':
-            log.info "BWAmem2 index: ${bwamem2IndexPath()}*"
-            break
-
-        case 'bowtie':
-        case 'bowtie2':
-            log.info "Bowtie2 index: ${bowtie2IndexPath()}*"
-            break
-
-        case 'star':
-            log.info "STAR index: ${starIndexPath()}"
-            break
+        log.info "BWA index: ${bwaIndexPath()}*"
+    }
+    else if (alignerLc in ['bwamem', 'bwa_mem', 'bwamem2', 'bwa_mem2'])
+    {
+        log.info "BWAmem2 index: ${bwamem2IndexPath()}*"
+    }
+    else if (alignerLc in ['bowtie', 'bowtie2'])
+    {
+        log.info "Bowtie2 index: ${bowtie2IndexPath()}*"
+    }
+    else if (alignerLc == 'star')
+    {
+        log.info "STAR index: ${starIndexPath()}"
     }
 }
 
@@ -318,69 +280,19 @@ def displayParameters()
  * Check the alignment CSV file has the necessary minimum columns to run
  * in the configured mode and that each line in the file has those mandatory
  * values set.
+ *
+ * CSV parsing (Apache Commons CSV) requires Java imports that are not permitted
+ * in strict-parser NF scripts; the logic is delegated to lib/CsvUtils.groovy.
  */
 def checkAlignmentCSV()
 {
-    def ok = true
     try
     {
-        def driverFile = file(params.alignmentCSV)
-        driverFile.withReader('UTF-8')
-        {
-            stream ->
-            def parser = CSVParser.parse(stream, CSVFormat.DEFAULT.withHeader())
-            def first = true
-
-            for (record in parser)
-            {
-                if (first)
-                {
-                    if (!record.isMapped('Read1'))
-                    {
-                        log.error "${params.alignmentCSV} must contain a column 'Read1'."
-                        ok = false
-                    }
-                    if (pairedEnd() && !record.isMapped('Read2'))
-                    {
-                        log.error "${params.alignmentCSV} must contain a column 'Read2' for aligning paired end."
-                        ok = false
-                    }
-                    if (params.mergeSamples && !record.isMapped('SampleName'))
-                    {
-                        log.error "${params.alignmentCSV} must contain a column 'SampleName' when sample merging is requested."
-                        ok = false
-                    }
-                    first = false
-                    if (!ok)
-                    {
-                        break
-                    }
-                }
-
-                def rowNum = parser.recordNumber + 1
-                if (!record.get('Read1'))
-                {
-                    log.error "No 'Read1' file name set on line ${rowNum}."
-                    ok = false
-                }
-                if (pairedEnd() && !record.get('Read2'))
-                {
-                    log.error "No 'Read2' file name set on line ${rowNum}."
-                    ok = false
-                }
-                if (params.mergeSamples && !record.get('SampleName'))
-                {
-                    log.error "No 'SampleName' defined on line ${rowNum}."
-                    ok = false
-                }
-            }
-        }
+        return APUtils.checkAlignmentCSV(params, pairedEnd(), log)
     }
     catch (Exception e)
     {
         logException(e)
-        ok = false
+        return false
     }
-
-    return ok
 }

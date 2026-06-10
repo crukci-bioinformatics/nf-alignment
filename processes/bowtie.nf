@@ -2,8 +2,6 @@
  * Processes for running Bowtie 2.
  */
 
-import nextflow.util.BlankSeparatedList
-
 
 /*
  * Align with Bowtie 2 single end.
@@ -19,7 +17,7 @@ process bowtie_se
         tuple val(basename), val(chunk), path(read1), path(bowtie2IndexDir), val(bowtie2IndexPrefix)
 
     output:
-        tuple val(basename), val(chunk), path(outBam)
+        tuple val(basename), val(chunk), path("${basename}.bowtie.${chunk}.bam")
 
     shell:
         outBam = "${basename}.bowtie.${chunk}.bam"
@@ -40,7 +38,7 @@ process bowtie_pe
         tuple val(basename), val(chunk), path(read1), path(read2), path(bowtie2IndexDir), val(bowtie2IndexPrefix)
 
     output:
-        tuple val(basename), val(chunk), path(outBam)
+        tuple val(basename), val(chunk), path("${basename}.bowtie.${chunk}.bam")
 
     shell:
         outBam = "${basename}.bowtie.${chunk}.bam"

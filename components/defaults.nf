@@ -9,16 +9,19 @@
  */
 def pairedEnd()
 {
-    switch (params.endType.toLowerCase()[0])
+    def first = params.endType.toLowerCase()[0]
+
+    if (first == 's')
     {
-        case 's':
-            return false
-
-        case 'p':
-            return true
-
-        default:
-            throw new IllegalArgumentException("End type must be given to indicate single read (se/sr) or paired end (pe).")
+        return false
+    }
+    else if (first == 'p')
+    {
+        return true
+    }
+    else
+    {
+        throw new IllegalArgumentException("End type must be given to indicate single read (se/sr) or paired end (pe).")
     }
 }
 

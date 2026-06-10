@@ -2,8 +2,6 @@
  * Miscellaneous helper functions used all over the pipeline.
  */
 
-import java.text.*
-
 /*
  * Get the base name from a file name, using the extract pattern and capture
  * group set in the parameters.

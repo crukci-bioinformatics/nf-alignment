@@ -5,15 +5,15 @@ LABEL   maintainer="Richard Bowers<richard.bowers@cruk.cam.ac.uk>"
 ARG INSTALL_DIR=/opt
 ARG BUILD_DIR=/var/tmp/alignment_software_build
 
-ARG GROOVY_V=4.0.29
+ARG GROOVY_V=4.0.32
 
 ARG BEDTOOLS_V=2.31.1
-ARG BOWTIE2_V=2.5.4
+ARG BOWTIE2_V=2.5.5
 ARG BWA_V=0.7.19
 ARG BWAMEM_V=2.3
 ARG PICARD_V=3.4.0
-ARG HTSLIB_V=1.22.1
-ARG SAMTOOLS_V=1.22.1
+ARG HTSLIB_V=1.23.1
+ARG SAMTOOLS_V=1.23.1
 ARG STAR_V=2.7.11b
 
 ARG TAROPTS="--no-same-owner --no-same-permissions"

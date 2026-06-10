@@ -17,7 +17,7 @@ process bwa_mem
         tuple val(basename), val(chunk), path(sequenceFiles), path(bwamem2IndexDir), val(bwamem2IndexPrefix)
 
     output:
-        tuple val(basename), val(chunk), path(outBam)
+        tuple val(basename), val(chunk), path("${basename}.bwamem.${chunk}.bam")
 
     shell:
         outBam = "${basename}.bwamem.${chunk}.bam"
