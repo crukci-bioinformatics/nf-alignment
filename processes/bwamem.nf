@@ -2,11 +2,13 @@
  * Processes for running BWA-mem.
  */
 
+nextflow.enable.types = true
+ 
 /*
  * Align with BWAmem (single read or paired end).
- * Needs a list of one or two FASTQ files for alignment in each tuple.
+ * Needs a list of one or two FASTQ files for alignment in each record.
  */
-process bwa_mem
+process bwaMem
 {
     cpus 4
     memory { 16.GB * task.attempt }
@@ -14,10 +16,10 @@ process bwa_mem
     maxRetries 2
 
     input:
-        tuple val(basename), val(chunk), path(sequenceFiles), path(bwamem2IndexDir), val(bwamem2IndexPrefix)
+        record(basename: String, chunk: Integer, sequenceFiles: List<Path>, bwamem2IndexDir: Path, bwamem2IndexPrefix: String)
 
     output:
-        tuple val(basename), val(chunk), path("${basename}.bwamem.${chunk}.bam")
+        record(basename: basename, chunk: chunk, bam: file("${basename}.bwamem.${chunk}.bam"))
 
     shell:
         outBam = "${basename}.bwamem.${chunk}.bam"

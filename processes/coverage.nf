@@ -2,6 +2,8 @@
  * Processes for calculating genome coverage.
  */
 
+nextflow.enable.types = true
+ 
 include { safeName } from "plugin/nf-crukci-support"
 include { alignedFileName } from "../components/functions"
 
@@ -9,7 +11,7 @@ include { alignedFileName } from "../components/functions"
  * Run UCSC 'genomeCoverageBed' tool to calculate coverage from a BAM file.
  * Produces a bedgraph.
  */
-process sample_genomecoverage
+process sampleGenomeCoverage
 {
     label 'coverage'
 
@@ -19,12 +21,13 @@ process sample_genomecoverage
         params.createCoverage
 
     input:
-        tuple val(sampleName), path(inBam), path(genomeSizes)
+        record(sampleName: String, bam: Path, genomeSizes: Path)
 
     output:
-        tuple val(sampleName), path("${alignedFileName(safeName(sampleName))}.bedgraph"), path(genomeSizes)
+        record(sampleName: sampleName, bedgraph: file(bedgraph))
 
     shell:
+        inBam = bam
         safeSampleName = safeName(sampleName)
         bedgraph = "${alignedFileName(safeSampleName)}.bedgraph"
         template "ucsc/genomeCoverageBed.sh"
@@ -33,15 +36,15 @@ process sample_genomecoverage
 /*
  * Sort a bedgraph file into a sorted bed with Bedtools' 'bedSort'.
  */
-process sample_bedsort
+process sampleBedSort
 {
     label 'coverage'
 
     input:
-        tuple val(sampleName), path(bedgraph), path(genomeSizes)
+        record(sampleName: String, bedgraph: Path, genomeSizes: Path)
 
     output:
-        tuple val(sampleName), path("${alignedFileName(safeName(sampleName))}.sorted.bed"), path(genomeSizes)
+        record(sampleName: sampleName, sortedBed: file(sortedBed))
 
     shell:
         safeSampleName = safeName(sampleName)
@@ -52,17 +55,17 @@ process sample_bedsort
 /*
  * Convert a bedgraph file to bigwig with the UCSC 'bedGraphToBigWig' tool.
  */
-process sample_bedgraphtobigwig
+process sampleBedgraphToBigwig
 {
     label 'coverage'
 
     publishDir params.sampleBamDir, mode: "link", pattern: "*.bigwig"
 
     input:
-        tuple val(sampleName), path(sortedBed), path(genomeSizes)
+        record(sampleName: String, sortedBed: Path, genomeSizes: Path)
 
     output:
-        tuple val(sampleName), path("${alignedFileName(safeName(sampleName))}.bigwig")
+        record(sampleName: sampleName, bigwig: file(bigwig))
 
     shell:
         safeSampleName = safeName(sampleName)

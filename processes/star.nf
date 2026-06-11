@@ -2,8 +2,11 @@
  * Processes for running STAR.
  */
 
+nextflow.enable.types = true
+ 
 /*
  * Align with STAR (single read or paired end).
+ * Needs a list of one or two FASTQ files for alignment in each record.
  */
 process STAR
 {
@@ -13,10 +16,10 @@ process STAR
     maxRetries 2
 
     input:
-        tuple val(basename), val(chunk), path(sequenceFiles), path(starIndex)
+        record(basename: String, chunk: Integer, sequenceFiles: List<Path>, starIndex: Path)
 
     output:
-        tuple val(basename), val(chunk), path("${basename}/Aligned.out.bam")
+        record(basename: basename, chunk: chunk, bam: file("${basename}/Aligned.out.bam"))
 
     shell:
         outBam = "${basename}/Aligned.out.bam"

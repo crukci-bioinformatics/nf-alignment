@@ -5,90 +5,79 @@
 include { sizeOf } from "plugin/nf-crukci-support"
 include { basenameExtractor; extractChunkNumber } from "../components/functions"
 include { bowtie2IndexPath } from "../components/defaults"
-include { split_fastq as split_fastq_1; split_fastq as split_fastq_2 } from "../processes/fastq"
-include { bowtie_pe } from "../processes/bowtie"
-include { pairedend } from "./pairedend"
+include { splitFastq as splitFastq1; splitFastq as splitFastq2 } from "../processes/fastq"
+include { bowtiePE } from "../processes/bowtie"
+include { pairedEnd } from "./pairedend"
 
 
-workflow bowtie_pe_wf
+workflow bowtiePE_wf
 {
     take:
-        csv_channel
+        csvChannel
 
     main:
-        bowtie2_index_path = file(bowtie2IndexPath())
-        bowtie2_index_channel = channel.of(tuple bowtie2_index_path.parent, bowtie2_index_path.name)
+        bowtie2IndexFile = file(bowtie2IndexPath())
+        bowtie2IndexDirValue = channel.value(bowtie2IndexFile.parent)
+        bowtie2IndexPrefixValue = channel.value(bowtie2IndexFile.name)
 
-        fastq_channel =
-            csv_channel
-            .map
-            {
-                row ->
-                tuple basenameExtractor(row.Read1),
-                      file("${params.fastqDir}/${row.Read1}", checkIfExists: true, arity: '1'),
-                      file("${params.fastqDir}/${row.Read2}", checkIfExists: true, arity: '1')
+        fastqChannel =
+            csvChannel
+            .map { row ->
+                record(
+                    basename: basenameExtractor(row.Read1),
+                    fastq1: file("${params.fastqDir}/${row.Read1}", checkIfExists: true, arity: '1'),
+                    fastq2: file("${params.fastqDir}/${row.Read2}", checkIfExists: true, arity: '1')
+                )
             }
 
         // Split into two channels, one read in each, for fastq splitting.
 
-        read1_channel =
-            fastq_channel
-            .map
-            {
-                base, read1, read2 ->
-                tuple base, 1, read1
-            }
+        read1Channel =
+            fastqChannel
+            .map { r -> record(basename: r.basename, read: 1, fastqFile: r.fastq1) }
 
-        read2_channel =
-            fastq_channel
-            .map
-            {
-                base, read1, read2 ->
-                tuple base, 2, read2
-            }
+        read2Channel =
+            fastqChannel
+            .map { r -> record(basename: r.basename, read: 2, fastqFile: r.fastq2) }
 
-        split_fastq_1(read1_channel)
-        split_fastq_2(read2_channel)
+        splitFastq1(read1Channel)
+        splitFastq2(read2Channel)
 
         // Get the number of chunks for each base id (same for both channels).
         // See https://groups.google.com/g/nextflow/c/fScdmB_w_Yw and
         // https://github.com/danielecook/TIL/blob/master/Nextflow/groupKey.md
 
-        chunk_count_channel =
-            split_fastq_1.out
-            .map
-            {
-                basename, read, fastqFiles ->
-                tuple basename, sizeOf(fastqFiles)
-            }
+        chunkCountChannel =
+            splitFastq1.out
+            .map { r -> record(basename: r.basename, chunkCount: sizeOf(r.fastqFiles)) }
 
         // Flatten the list of files in both channels to have two channels with
         // a single file per item. Also extract the chunk number from the file name.
+        // Name the read fields 'read1' and 'read2' for the bowtiePe process.
 
-        per_chunk_channel_1 =
-            split_fastq_1.out
-            .transpose()
-            .map
-            {
-                basename, read, fastq ->
-                tuple basename, extractChunkNumber(fastq), fastq
+        perChunkChannel1 =
+            splitFastq1.out
+            .flatMap { r ->
+                r.fastqFiles.collect { f ->
+                    record(basename: r.basename, chunk: extractChunkNumber(f), read1: f)
+                }
             }
 
-        per_chunk_channel_2 =
-            split_fastq_2.out
-            .transpose()
-            .map
-            {
-                basename, read, fastq ->
-                tuple basename, extractChunkNumber(fastq), fastq
+        perChunkChannel2 =
+            splitFastq2.out
+            .flatMap { r ->
+                r.fastqFiles.collect { f ->
+                    record(basename: r.basename, chunk: extractChunkNumber(f), read2: f)
+                }
             }
 
-        // Combine these channels by base name and chunk number.
+        // Join these channels by base name and chunk number, then add the index.
 
-        combined_chunk_channel = per_chunk_channel_1
-            .combine(per_chunk_channel_2, by: 0..1)
-            .combine(bowtie2_index_channel)
+        combinedChunkChannel =
+            perChunkChannel1
+            .join(perChunkChannel2, by: ['basename', 'chunk'])
+            .combine(bowtie2IndexDir: bowtie2IndexDirValue, bowtie2IndexPrefix: bowtie2IndexPrefixValue)
 
-        bowtie_pe(combined_chunk_channel)
-        pairedend(bowtie_pe.out, csv_channel, chunk_count_channel)
+        bowtiePE(combinedChunkChannel)
+        pairedEnd(bowtiePe.out, csvChannel, chunkCountChannel)
 }

@@ -7,9 +7,10 @@
  * provided below instead.
  */
 
+nextflow.enable.types = true
+ 
 include { javaMemoryOptions; sizeOf; safeName } from "plugin/nf-crukci-support"
 include { alignedFileName } from '../components/functions'
-include { rnaseqStrandSpecificity } from '../components/defaults'
 
 /*
  * Equivalent of Apache Commons StringUtils.trimToNull: returns null when the
@@ -77,16 +78,16 @@ def maxReadsInRam(available, readLength)
 
     assert available instanceof nextflow.util.MemoryUnit : "available memory must be given as a MemoryUnit"
 
-    final def allocationPerRead = 4000.0  // bytes
-    final def bytesPerBase = 29.41176
-    final def overheadPerRead = 1059.0    // bytes
+    def allocationPerRead = 4000.0  // bytes
+    def bytesPerBase = 29.41176
+    def overheadPerRead = 1059.0    // bytes
 
-    final def allocationForReadLength = overheadPerRead + bytesPerBase * readLength  // bytes
-    final def allocationRatio = allocationPerRead / allocationForReadLength
+    def allocationForReadLength = overheadPerRead + bytesPerBase * readLength  // bytes
+    def allocationRatio = allocationPerRead / allocationForReadLength
 
-    final def readsPerGB = 250000 * allocationRatio    // reads / gb
-    final def readsPerMB = readsPerGB / 1024           // reads / mb
-    final def totalReads = available.mega * readsPerMB    // mb * reads/mb to give reads
+    def readsPerGB = 250000 * allocationRatio    // reads / gb
+    def readsPerMB = readsPerGB / 1024           // reads / mb
+    def totalReads = available.mega * readsPerMB    // mb * reads/mb to give reads
 
     return totalReads as long
 }
@@ -95,17 +96,18 @@ def maxReadsInRam(available, readLength)
  * Run Picard's 'AddOrReplaceReadGroups' to add read group information to an aligned
  * BAM file. Defaults are provided if the alignment.csv file is missing values.
  */
-process picard_addreadgroups
+process picardAddReadGroups
 {
     label "picardSmall"
 
     input:
-        tuple val(basename), val(chunk), path(inBam), val(sequencingInfo)
+        record(basename: String, chunk: Integer, bam: Path, sequencingInfo: Map)
 
     output:
-        tuple val(basename), val(chunk), path(outBam)
+        record(basename: basename, chunk: chunk, bam: file(outBam))
 
     shell:
+        inBam = bam
         outBam = "${basename}.readgroups.${chunk}.bam"
         javaMem = javaMemoryOptions(task).jvmOpts
 
@@ -139,17 +141,18 @@ process picard_addreadgroups
 /*
  * Sort a BAM file using Picard's 'SortSam' tool. Used for sorting single read files.
  */
-process picard_sortsam
+process picardSortSam
 {
     label "picard"
 
     input:
-        tuple val(basename), val(chunk), path(inBam)
+        record(basename: String, chunk: Integer, bam: Path)
 
     output:
-        tuple val(basename), path(outBam)
+        record(basename: basename, bam: file(outBam))
 
     shell:
+        inBam = bam
         outBam = "${basename}.sorted.${chunk}.bam"
 
         def memoryInfo = javaMemoryOptions(task)
@@ -163,19 +166,20 @@ process picard_sortsam
  * Sort a BAM file and fix mate pair information using Picard's
  * 'FixMateInformation' tool. Used for sorting and fixing paired end files.
  */
-process picard_fixmate
+process picardFixMate
 {
     label "picard"
 
     cpus 2
 
     input:
-        tuple val(basename), val(chunk), path(inBam)
+        record(basename: String, chunk: Integer, bam: Path)
 
     output:
-        tuple val(basename), path(outBam)
+        record(basename: basename, bam: file(outBam))
 
     shell:
+        inBam = bam
         outBam = "${basename}.fixed.${chunk}.bam"
 
         def memoryInfo = javaMemoryOptions(task)
@@ -190,21 +194,22 @@ process picard_fixmate
  * PCR duplicates. Uses Picard's 'MergeSamFiles' for simple merging and
  * 'MarkDuplicates' for duplicate marking.
  */
-process picard_merge_or_markduplicates
+process picardMergeOrMarkDuplicates
 {
     label "picard"
 
     publishDir params.bamDir, mode: "link"
 
     input:
-        tuple val(basename), path(inBams)
+        record(basename: String, bams: List<Path>)
 
     output:
-        tuple val(basename), path(outBam), emit: merged_bam
-        path outBai
-        path metrics, optional: true
+        mergedBam: record(basename: basename, bam: file(outBam))
+        index: path(outBai)
+        metrics: path(metrics, optional: true)
 
     shell:
+        inBams = bams
         outBam = "${alignedFileName(basename)}.bam"
         outBai = "${alignedFileName(basename)}.bai"
         metrics = "${alignedFileName(basename)}.duplication.txt"
@@ -227,7 +232,7 @@ process picard_merge_or_markduplicates
 /*
  * Calculate alignment metrics with Picard's 'CollectAlignmentSummaryMetrics'.
  */
-process picard_alignmentmetrics
+process picardAlignmentMetrics
 {
     label "picard"
     label "metrics"
@@ -238,12 +243,13 @@ process picard_alignmentmetrics
         params.alignmentMetrics
 
     input:
-        tuple val(basename), path(inBam), path(referenceFasta)
+        record(basename: String, bam: Path, referenceFasta: Path)
 
     output:
         path metrics
 
     shell:
+        inBam = bam
         metrics = "${alignedFileName(basename)}.alignment.txt"
         javaMem = javaMemoryOptions(task).jvmOpts
 
@@ -254,7 +260,7 @@ process picard_alignmentmetrics
  * Calculate whole genome sequencing metrics with Picard's 'CollectWgsMetrics'.
  * Note that this process can take a fair while.
  */
-process picard_wgsmetrics
+process picardWGSMetrics
 {
     label "picard"
     label "metrics"
@@ -265,13 +271,14 @@ process picard_wgsmetrics
         params.wgsMetrics
 
     input:
-        tuple val(basename), path(inBam), path(referenceFasta)
+        record(basename: String, bam: Path, referenceFasta: Path)
         val(countUnpairedReads)
 
     output:
         path metrics
 
     shell:
+        inBam = bam
         metrics = "${alignedFileName(basename)}.wgs.txt"
         javaMem = javaMemoryOptions(task).jvmOpts
 
@@ -281,7 +288,7 @@ process picard_wgsmetrics
 /*
  * Calculate whole genome sequencing metrics with Picard's 'CollectRnaSeqMetrics'.
  */
-process picard_rnaseqmetrics
+process picardRnaSeqMetrics
 {
     label "picard"
     label "metrics"
@@ -292,14 +299,15 @@ process picard_rnaseqmetrics
         params.rnaseqMetrics
 
     input:
-        tuple val(basename), path(inBam), path(referenceFasta), path(referenceRefFlat)
+        record(basename: String, bam: Path, referenceFasta: Path, referenceRefFlat: Path)
 
     output:
         path metrics
 
     shell:
+        inBam = bam
         metrics = "${alignedFileName(basename)}.rnaseq.txt"
-        strandSpecificity = rnaseqStrandSpecificity()
+        strandSpecificity = APDefaults.rnaseqStrandSpecificity(params)
 
         javaMem = javaMemoryOptions(task).jvmOpts
 
@@ -310,7 +318,7 @@ process picard_rnaseqmetrics
  * Calculate insert size metrics with Picard's 'CollectInsertSizeMetrics'.
  * This can only be used on paired end alignments.
  */
-process picard_insertmetrics
+process picardInsertSizeMetrics
 {
     label "picard"
     label "metrics"
@@ -321,12 +329,13 @@ process picard_insertmetrics
         params.insertSizeMetrics
 
     input:
-        tuple val(basename), path(inBam), path(referenceFasta)
+        record(basename: String, bam: Path, referenceFasta: Path)
 
     output:
         path metrics, optional: true
 
     shell:
+        inBam = bam
         metrics = "${alignedFileName(basename)}.insertsize.txt"
         plot = "${alignedFileName(basename)}.insertsize.pdf"
 
@@ -340,7 +349,7 @@ process picard_insertmetrics
  * PCR duplicates. Uses Picard's 'MergeSamFiles' for simple merging and
  * 'MarkDuplicates' for duplicate marking.
  */
-process sample_merge_or_markduplicates
+process sampleMergeOrMarkDuplicates
 {
     label "picard"
 
@@ -350,14 +359,15 @@ process sample_merge_or_markduplicates
         params.mergeSamples
 
     input:
-        tuple val(sampleName), path(inBams)
+        record(sampleName: String, bams: List<Path>)
 
     output:
-        tuple val(sampleName), path(outBam), emit: sample_bam
+        record(sampleName: sampleName, bam: file(outBam)), emit: sampleBam
         path outIndex, optional: true
         path metrics, optional: true
 
     shell:
+        inBams = bams
         safeSampleName = safeName(sampleName)
         outBam = "${alignedFileName(safeSampleName)}.bam"
         outIndex = "${alignedFileName(safeSampleName)}.bai"
@@ -390,7 +400,7 @@ process sample_merge_or_markduplicates
  * Calculate alignment metrics with Picard's 'CollectAlignmentSummaryMetrics'
  * for merged whole sample BAM files.
  */
-process sample_alignmentmetrics
+process sampleAlignmentMetrics
 {
     label "picard"
     label "metrics"
@@ -401,12 +411,13 @@ process sample_alignmentmetrics
         params.alignmentMetrics
 
     input:
-        tuple val(sampleName), path(inBam), path(referenceFasta)
+        record(sampleName: String, bam: Path, referenceFasta: Path)
 
     output:
         path metrics
 
     shell:
+        inBam = bam
         safeSampleName = safeName(sampleName)
         metrics = "${alignedFileName(safeSampleName)}.alignment.txt"
 
@@ -420,7 +431,7 @@ process sample_alignmentmetrics
  * for merged whole sample BAM files.
  * Note that this process can take a fair while.
  */
-process sample_wgsmetrics
+process sampleWGSMetrics
 {
     label "picard"
     label "metrics"
@@ -431,13 +442,14 @@ process sample_wgsmetrics
         params.wgsMetrics
 
     input:
-        tuple val(sampleName), path(inBam), path(referenceFasta)
+        record(sampleName: String, bam: Path, referenceFasta: Path)
         val(countUnpairedReads)
 
     output:
         path metrics
 
     shell:
+        inBam = bam
         safeSampleName = safeName(sampleName)
         metrics = "${alignedFileName(safeSampleName)}.wgs.txt"
 
@@ -450,7 +462,7 @@ process sample_wgsmetrics
  * Calculate whole genome sequencing metrics with Picard's 'CollectRnaSeqMetrics'
  * for merged whole sample BAM files.
  */
-process sample_rnaseqmetrics
+process sampleRnaSeqMetrics
 {
     label "picard"
     label "metrics"
@@ -461,12 +473,13 @@ process sample_rnaseqmetrics
         params.rnaseqMetrics
 
     input:
-        tuple val(sampleName), path(inBam), path(referenceFasta), path(referenceRefFlat)
+        record(sampleName: String, bam: Path, referenceFasta: Path, referenceRefFlat: Path)
 
     output:
         path metrics
 
     shell:
+        inBam = bam
         safeSampleName = safeName(sampleName)
         metrics = "${alignedFileName(safeSampleName)}.rnaseq.txt"
         strandSpecificity = rnaseqStrandSpecificity()
@@ -481,7 +494,7 @@ process sample_rnaseqmetrics
  * for merged whole sample BAM files.
  * This can only be used on paired end alignments.
  */
-process sample_insertmetrics
+process sampleInsertSizeMetrics
 {
     label "picard"
     label "metrics"
@@ -492,12 +505,13 @@ process sample_insertmetrics
         params.insertSizeMetrics
 
     input:
-        tuple val(sampleName), path(inBam), path(referenceFasta)
+        record(sampleName: String, bam: Path, referenceFasta: Path)
 
     output:
         path metrics, optional: true
 
     shell:
+        inBam = bam
         safeSampleName = safeName(sampleName)
         metrics = "${alignedFileName(safeSampleName)}.insertsize.txt"
         plot = "${alignedFileName(safeSampleName)}.insertsize.pdf"

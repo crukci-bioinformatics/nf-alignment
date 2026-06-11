@@ -5,88 +5,96 @@
 include { sizeOf } from "plugin/nf-crukci-support"
 include { basenameExtractor } from "../components/functions"
 include { bwaIndexPath } from "../components/defaults"
-include { split_fastq as split_fastq_1; split_fastq as split_fastq_2 } from "../processes/fastq"
-include { bwa_aln as bwa_aln_1; bwa_aln as bwa_aln_2; bwa_sampe } from "../processes/bwa"
-include { pairedend } from "./pairedend"
+include { splitFastq as splitFastq1; splitFastq as splitFastq2 } from "../processes/fastq"
+include { bwaAln as bwaAln1; bwaAln as bwaAln2; bwaSamPE } from "../processes/bwa"
+include { pairedEnd } from "./pairedend"
 
-workflow bwa_pe_wf
+workflow bwaPE_wf
 {
     take:
-        csv_channel
+        csvChannel
 
     main:
-        bwa_index_path = file(bwaIndexPath())
-        bwa_index_channel = channel.of(tuple bwa_index_path.parent, bwa_index_path.name)
+        bwaIndexFile = file(bwaIndexPath())
+        bwaIndexDirValue    = channel.value(bwaIndexFile.parent)
+        bwaIndexPrefixValue = channel.value(bwaIndexFile.name)
 
-        fastq_channel =
-            csv_channel
-            .map
-            {
-                row ->
-                tuple basenameExtractor(row.Read1),
-                      file("${params.fastqDir}/${row.Read1}", checkIfExists: true, arity: '1'),
-                      file("${params.fastqDir}/${row.Read2}", checkIfExists: true, arity: '1')
+        fastqChannel =
+            csvChannel
+            .map { row ->
+                record(
+                    basename: basenameExtractor(row.Read1),
+                    fastq1: file("${params.fastqDir}/${row.Read1}", checkIfExists: true, arity: '1'),
+                    fastq2: file("${params.fastqDir}/${row.Read2}", checkIfExists: true, arity: '1')
+                )
             }
 
         // Split into two channels, one read in each, for BWA aln.
 
-        read1_channel =
-            fastq_channel
-            .map
-            {
-                base, read1, read2 ->
-                tuple base, 1, read1
-            }
+        read1Channel =
+            fastqChannel
+            .map { r -> record(basename: r.basename, read: 1, fastqFile: r.fastq1) }
 
-        read2_channel =
-            fastq_channel
-            .map
-            {
-                base, read1, read2 ->
-                tuple base, 2, read2
-            }
+        read2Channel =
+            fastqChannel
+            .map { r -> record(basename: r.basename, read: 2, fastqFile: r.fastq2) }
 
         // Split the files in these channels into chunks.
 
-        split_fastq_1(read1_channel)
-        split_fastq_2(read2_channel)
+        splitFastq1(read1Channel)
+        splitFastq2(read2Channel)
 
         // Get the number of chunks for each base id (same for both channels).
         // See https://groups.google.com/g/nextflow/c/fScdmB_w_Yw and
         // https://github.com/danielecook/TIL/blob/master/Nextflow/groupKey.md
 
-        chunk_count_channel =
-            split_fastq_1.out
-            .map
-            {
-                basename, read, fastqFiles ->
-                tuple basename, sizeOf(fastqFiles)
+        chunkCountChannel =
+            splitFastq1.out
+            .map { r -> record(basename: r.basename, chunkCount: sizeOf(r.fastqFiles)) }
+
+        // Flatten the chunks in each channel and add the BWA index fields.
+
+        read1PerChunkChannel =
+            splitFastq1.out
+            .flatMap { r ->
+                r.fastqFiles.collect { f ->
+                    record(basename: r.basename, read: r.read, fastqFile: f)
+                }
             }
+            .combine(bwaIndexDir: bwaIndexDirValue, bwaIndexPrefix: bwaIndexPrefixValue)
 
-        // Map these channels so there is a single FASTQ per item in the channel
-
-        read1_per_chunk_channel =
-            split_fastq_1.out
-            .transpose()
-            .combine(bwa_index_channel)
-
-        read2_per_chunk_channel =
-            split_fastq_2.out
-            .transpose()
-            .combine(bwa_index_channel)
+        read2PerChunkChannel =
+            splitFastq2.out
+            .flatMap { r ->
+                r.fastqFiles.collect { f ->
+                    record(basename: r.basename, read: r.read, fastqFile: f)
+                }
+            }
+            .combine(bwaIndexDir: bwaIndexDirValue, bwaIndexPrefix: bwaIndexPrefixValue)
 
         // Align the chunks in independent channels.
 
-        bwa_aln_1(read1_per_chunk_channel)
-        bwa_aln_2(read2_per_chunk_channel)
+        bwaAln1(read1PerChunkChannel)
+        bwaAln2(read2PerChunkChannel)
 
-        // Combine the output of these two channels into one, grouping on base name and chunk number.
+        // Join the output of these two channels into one, grouping on base name and chunk number.
+        // Rename the sai/fastq fields so they don't collide when the two records are merged,
+        // then add the index fields for the sampe step.
 
-        sampe_channel =
-            bwa_aln_1.out
-            .join(bwa_aln_2.out, by: [0,1], failOnDuplicate: true, failOnMismatch: true)
-            .combine(bwa_index_channel)
+        sampeChannel =
+            bwaAln1.out.map { r ->
+                record(basename: r.basename, chunk: r.chunk, saiFile1: r.saiFile, fastqFile1: r.fastqFile)
+            }
+            .join(
+                bwaAln2.out.map { r ->
+                    record(basename: r.basename, chunk: r.chunk, saiFile2: r.saiFile, fastqFile2: r.fastqFile)
+                },
+                by: ['basename', 'chunk'],
+                failOnDuplicate: true,
+                failOnMismatch: true
+            )
+            .combine(bwaIndexDir: bwaIndexDirValue, bwaIndexPrefix: bwaIndexPrefixValue)
 
-        bwa_sampe(sampe_channel)
-        pairedend(bwa_sampe.out, csv_channel, chunk_count_channel)
+        bwaSampe(sampeChannel)
+        pairedend(bwaSampe.out, csvChannel, chunkCountChannel)
 }

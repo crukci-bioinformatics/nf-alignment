@@ -2,19 +2,21 @@
  * Generic FASTQ processes.
  */
 
+nextflow.enable.types = true
+ 
 /*
  * Split FASTQ file into chunks.
  */
-process split_fastq
+process splitFastq
 {
     memory '1GB'
     time { 12.hour + 1.hour * task.attempt }
 
     input:
-        tuple val(basename), val(read), path(fastqFile)
+        record(basename: String, read: Integer, fastqFile: Path)
 
     output:
-        tuple val(basename), val(read), path("*-S??????.fq.gz")
+        record(basename: basename, read: read, fastqFiles: files("*-S??????.fq.gz"))
 
     shell:
         template "fastq/splitFastq.sh"

@@ -3,9 +3,11 @@
  * and merging into sample bams.
  */
 
+nextflow.enable.types = true
+ 
 include { alignedFileName } from '../components/functions'
 
-process make_safe_for_merging
+process makeSafeForMerging
 {
     executor 'local'
 
@@ -16,12 +18,13 @@ process make_safe_for_merging
         params.mergeSamples
 
     input:
-        tuple val(basename), path(inBam), val(sequencingInfo)
+        record(basename: String, bam: Path, sequencingInfo: Map)
 
     output:
-        tuple val(basename), path("${alignedFileName(basename)}.forsamplemerging.bam"), val(sequencingInfo)
+        record(basename: basename, bam: file(outBam), sequencingInfo: sequencingInfo)
 
     shell:
+        inBam = bam
         outBam = "${alignedFileName(basename)}.forsamplemerging.bam"
 
         """

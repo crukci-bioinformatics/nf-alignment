@@ -2,11 +2,12 @@
  * Processes for running Bowtie 2.
  */
 
+nextflow.enable.types = true
 
 /*
  * Align with Bowtie 2 single end.
  */
-process bowtie_se
+process bowtieSE
 {
     cpus 4
     memory { 8.GB * task.attempt }
@@ -14,10 +15,10 @@ process bowtie_se
     maxRetries 2
 
     input:
-        tuple val(basename), val(chunk), path(read1), path(bowtie2IndexDir), val(bowtie2IndexPrefix)
+        record(basename: String, chunk: Integer, read1: Path, bowtie2IndexDir: Path, bowtie2IndexPrefix: String)
 
     output:
-        tuple val(basename), val(chunk), path("${basename}.bowtie.${chunk}.bam")
+        record(basename: basename, chunk: chunk, bam: file("${basename}.bowtie.${chunk}.bam"))
 
     shell:
         outBam = "${basename}.bowtie.${chunk}.bam"
@@ -27,7 +28,7 @@ process bowtie_se
 /*
  * Align with Bowtie 2 paired end.
  */
-process bowtie_pe
+process bowtiePE
 {
     cpus 4
     memory { 8.GB * task.attempt }
@@ -35,10 +36,10 @@ process bowtie_pe
     maxRetries 2
 
     input:
-        tuple val(basename), val(chunk), path(read1), path(read2), path(bowtie2IndexDir), val(bowtie2IndexPrefix)
+        record(basename: String, chunk: Integer, read1: Path, read2: Path, bowtie2IndexDir: Path, bowtie2IndexPrefix: String)
 
     output:
-        tuple val(basename), val(chunk), path("${basename}.bowtie.${chunk}.bam")
+        record(basename: basename, chunk: chunk, bam: file("${basename}.bowtie.${chunk}.bam"))
 
     shell:
         outBam = "${basename}.bowtie.${chunk}.bam"

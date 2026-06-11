@@ -8,116 +8,120 @@
  */
 
 include {
-    picard_fixmate; picard_merge_or_markduplicates; picard_addreadgroups;
-    picard_alignmentmetrics; picard_wgsmetrics; picard_rnaseqmetrics; picard_insertmetrics;
-    sample_merge_or_markduplicates;
-    sample_alignmentmetrics; sample_wgsmetrics; sample_rnaseqmetrics; sample_insertmetrics
+    picardFixMate; picardMergeOrMarkDuplicates; picardAddReadGroups;
+    picardAlignmentMetrics; picardWGSMetrics; picardRnaSeqMetrics; picardInsertSizeMetrics;
+    sampleMergeOrMarkDuplicates;
+    sampleAlignmentMetrics; sampleWGSMetrics; sampleRnaSeqMetrics; sampleInsertSizeMetrics
 } from "../processes/picard"
 
-include { make_safe_for_merging } from "../processes/premerging"
+include { makeSafeForMerging } from "../processes/premerging"
 
 include {
-    sample_genomecoverage; sample_bedsort; sample_bedgraphtobigwig
+    sampleGenomeCoverage; sampleBedSort; sampleBedgraphToBigwig
 } from "../processes/coverage"
 
 include { basenameExtractor } from "../components/functions"
 include { fastaReferencePath; genomeSizesPath; referenceRefFlatPath } from "../components/defaults"
 
-workflow pairedend
+workflow pairedEnd
 {
     take:
-        alignment_channel
-        sequencing_info_channel
-        chunk_count_channel
+        alignmentChannel
+        sequencingInfoChannel
+        chunkCountChannel
 
     main:
-        reference_fasta_channel    = channel.fromPath(fastaReferencePath())
-        genome_sizes_channel       = channel.fromPath(genomeSizesPath())
-        reference_refflat_channel  = channel.fromPath(referenceRefFlatPath())
+        referenceFastaValue   = channel.value(file(fastaReferencePath()))
+        genomeSizesValue      = channel.value(file(genomeSizesPath()))
+        referenceRefFlatValue = channel.value(file(referenceRefFlatPath()))
 
         // Add sequencing info back to the channel for read groups.
-        // It is available from sequencing_info_channel, the rows from the CSV file.
-        read_groups_channel =
-            alignment_channel
-            .combine(sequencing_info_channel.map { tuple basenameExtractor(it.Read1), it }, by: 0)
+        // It is available from sequencingInfoChannel, the rows from the CSV file.
+        readGroupsChannel =
+            alignmentChannel
+            .combine(
+                sequencingInfoChannel.map { row ->
+                    record(basename: basenameExtractor(row.Read1), sequencingInfo: row)
+                },
+                by: ['basename']
+            )
 
-        def rg_bams    = picard_addreadgroups(read_groups_channel)
-        def fixed_bams = picard_fixmate(rg_bams)
+        rgBams = picardAddReadGroups(readGroupsChannel)
+        fixedBams = picardFixMate(rgBams)
 
         // Group the outputs by base name. Use the groupKey function to
         // allow things to run when each group is complete, rather than
         // waiting for everything.
 
-        merge_channel =
-            fixed_bams
-            .combine(chunk_count_channel, by: 0)
-            .map {
-                basename, bam, chunkCount ->
-                tuple groupKey(basename, chunkCount), bam
+        mergeChannel =
+            fixedBams
+            .combine(chunkCountChannel, by: ['basename'])
+            .map { r ->
+                tuple groupKey(r.basename, r.chunkCount), r.bam
             }
             .groupTuple()
+            .map { basename, bams -> record(basename: basename, bams: bams) }
 
-        mergeResult = picard_merge_or_markduplicates(merge_channel)
+        mergeResult = picardMergeOrMarkDuplicates(mergeChannel)
 
-        picard_with_reference = mergeResult.merged_bam.combine(reference_fasta_channel)
+        picardWithRef = mergeResult.mergedBam.combine(referenceFasta: referenceFastaValue)
 
-        picard_alignmentmetrics(picard_with_reference)
-        picard_wgsmetrics(picard_with_reference, false)
-        picard_rnaseqmetrics(picard_with_reference.combine(reference_refflat_channel))
-        picard_insertmetrics(picard_with_reference)
+        picardAlignmentMetrics(picardWithRef)
+        picardWGSMetrics(picardWithRef, false)
+        picardRnaSeqMetrics(picardWithRef.combine(referenceRefFlat: referenceRefFlatValue))
+        picardInsertSizeMetrics(picardWithRef)
 
         // Join the output of merge or mark duplicates with the sequencing info
         // by base name.
-        with_info_channel =
-            mergeResult.merged_bam
-            .combine(sequencing_info_channel.map { tuple basenameExtractor(it.Read1), it }, by: 0)
+        withInfoChannel =
+            mergeResult.mergedBam
+            .combine(
+                sequencingInfoChannel.map { row ->
+                    record(basename: basenameExtractor(row.Read1), sequencingInfo: row)
+                },
+                by: ['basename']
+            )
 
-        def safe_for_merge = make_safe_for_merging(with_info_channel)
+        def safeForMerge = makeSafeForMerging(withInfoChannel)
 
         // Map to the sample name and collect BAM files for that sample.
-        safe_sample_channel = safe_for_merge
-            .map {
-                basename, bam, sequencingInfo ->
-                tuple sequencingInfo.SampleName, bam
-            }
+        safeSampleChannel = safeForMerge
+            .map { r -> record(sampleName: r.sequencingInfo.SampleName, bam: r.bam) }
 
         // Get the number of files for each sample and provide a groupKey for merging
         // so it can start each group once all the files are received.
 
-        sample_count_channel =
-            sequencing_info_channel
-            .map { tuple it.SampleName, it.Read1 }
+        sampleCountChannel =
+            sequencingInfoChannel
+            .map { row -> tuple row.SampleName, row.Read1 }
             .groupTuple()
-            .map {
-                sampleName, readFiles ->
-                tuple sampleName, readFiles.size()
+            .map { sampleName, readFiles ->
+                record(sampleName: sampleName, chunkCount: readFiles.size())
             }
 
-        sample_merge_channel =
-            safe_sample_channel
-            .combine(sample_count_channel, by: 0)
-            .map {
-                sampleName, bam, filesPerSample ->
-                tuple groupKey(sampleName, filesPerSample), bam
+        sampleMergeChannel =
+            safeSampleChannel
+            .combine(sampleCountChannel, by: ['sampleName'])
+            .map { r ->
+                tuple groupKey(r.sampleName, r.chunkCount), r.bam
             }
             .groupTuple()
+            .map { sampleName, bams -> record(sampleName: sampleName, bams: bams) }
 
-        sampleMergeResult = sample_merge_or_markduplicates(sample_merge_channel)
+        sampleMergeResult = sampleMergeOrMarkDuplicates(sampleMergeChannel)
 
-        sample_with_reference = sampleMergeResult.sample_bam.combine(reference_fasta_channel)
+        sampleWithRef = sampleMergeResult.sampleBam.combine(referenceFasta: referenceFastaValue)
 
-        sample_alignmentmetrics(sample_with_reference)
-        sample_wgsmetrics(sample_with_reference, false)
-        sample_rnaseqmetrics(sample_with_reference.combine(reference_refflat_channel))
-        sample_insertmetrics(sample_with_reference)
+        sampleAlignmentMetrics(sampleWithRef)
+        sampleWGSMetrics(sampleWithRef, false)
+        sampleRnaSeqMetrics(sampleWithRef.combine(referenceRefFlat: referenceRefFlatValue))
+        sampleInsertSizeMetrics(sampleWithRef)
 
-        sample_with_sizes = sampleMergeResult.sample_bam.combine(genome_sizes_channel)
-
-        def covOut  = sample_genomecoverage(sample_with_sizes)
-        def sortOut = sample_bedsort(covOut)
-        sample_bedgraphtobigwig(sortOut)
+        def covOut  = sampleGenomeCoverage(sampleMergeResult.sampleBam.combine(genomeSizes: genomeSizesValue))
+        def sortOut = sampleBedSort(covOut.combine(genomeSizes: genomeSizesValue))
+        sampleBedgraphToBigwig(sortOut.combine(genomeSizes: genomeSizesValue))
 
     emit:
-        bams        = mergeResult.merged_bam
-        sample_bams = sampleMergeResult.sample_bam
+        bams        = mergeResult.mergedBam
+        sampleBams  = sampleMergeResult.sampleBam
 }

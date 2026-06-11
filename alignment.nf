@@ -6,33 +6,14 @@
 
 include { validateParameters } from 'plugin/nf-schema'
 
-include { checkParameters; checkAlignmentCSV; displayParameters } from "./components/configuration"
-include { pairedEnd } from "./components/defaults"
-
-include { bwa_pe_wf } from "./pipelines/bwa_pe"
-include { bwa_se_wf } from "./pipelines/bwa_se"
-include { bwamem_pe_wf } from "./pipelines/bwamem_pe"
-include { bwamem_se_wf } from "./pipelines/bwamem_se"
-include { bowtie_pe_wf } from "./pipelines/bowtie_pe"
-include { bowtie_se_wf } from "./pipelines/bowtie_se"
-include { star_pe_wf } from "./pipelines/star_pe"
-include { star_se_wf } from "./pipelines/star_se"
-
-// Validate parameters against the schema, then check business logic and the alignment.csv file.
-
-validateParameters()
-
-if (!checkParameters(params))
-{
-    exit 1
-}
-if (!checkAlignmentCSV())
-{
-    exit 1
-}
-
-displayParameters()
-
+include { bwaPE_wf as bwaPE } from "./pipelines/bwa_pe"
+include { bwaSE_wf as bwaSE } from "./pipelines/bwa_se"
+include { bwamemPE_wf as bwamemPE } from "./pipelines/bwamem_pe"
+include { bwamemSE_wf as bwamemSE } from "./pipelines/bwamem_se"
+include { bowtiePE_wf as bowtiePE } from "./pipelines/bowtie_pe"
+include { bowtieSE_wf as bowtieSE } from "./pipelines/bowtie_se"
+include { starPE_wf as starPE } from "./pipelines/star_pe"
+include { starSE_wf as starSE } from "./pipelines/star_se"
 
 /*
  * Main work flow. For each line in alignment.csv, start aligning.
@@ -41,55 +22,70 @@ displayParameters()
  */
 workflow
 {
-    csv_channel = channel
+    // Validate parameters against the schema, then check business logic and the alignment.csv file.
+    
+    validateParameters()
+    
+    if (!APUtils.checkParameters(params, log))
+    {
+        exit 1
+    }
+    if (!APUtils.checkAlignmentCSV(params, log))
+    {
+        exit 1
+    }
+    
+    APUtils.displayParameters(params, log)
+    
+    csvChannel = channel
         .fromPath(params.alignmentCSV)
         .splitCsv(header: true, quote: '"', strip: true)
 
     def aligner = params.aligner.toLowerCase()
-    def paired  = pairedEnd()
+    def paired  = APDefaults.pairedEnd(params)
 
     if (aligner == 'bwa')
     {
         if (paired)
         {
-            bwa_pe_wf(csv_channel)
+            bwaPE(csvChannel)
         }
         else
         {
-            bwa_se_wf(csv_channel)
+            bwaSE(csvChannel)
         }
     }
     else if (aligner in ['bwamem', 'bwa_mem', 'bwamem2', 'bwa_mem2'])
     {
         if (paired)
         {
-            bwamem_pe_wf(csv_channel)
+            bwamemPE(csvChannel)
         }
         else
         {
-            bwamem_se_wf(csv_channel)
+            bwamemSE(csvChannel)
         }
     }
     else if (aligner in ['bowtie', 'bowtie2'])
     {
         if (paired)
         {
-            bowtie_pe_wf(csv_channel)
+            bowtiePE(csvChannel)
         }
         else
         {
-            bowtie_se_wf(csv_channel)
+            bowtieSE(csvChannel)
         }
     }
     else if (aligner == 'star')
     {
         if (paired)
         {
-            star_pe_wf(csv_channel)
+            starPE(csvChannel)
         }
         else
         {
-            star_se_wf(csv_channel)
+            starSE(csvChannel)
         }
     }
     else

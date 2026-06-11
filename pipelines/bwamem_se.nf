@@ -5,53 +5,52 @@
 include { sizeOf } from "plugin/nf-crukci-support"
 include { basenameExtractor; extractChunkNumber } from "../components/functions"
 include { bwamem2IndexPath } from "../components/defaults"
-include { split_fastq } from "../processes/fastq"
-include { bwa_mem } from "../processes/bwamem"
-include { singleread } from "./singleread"
+include { splitFastq } from "../processes/fastq"
+include { bwaMem } from "../processes/bwamem"
+include { singleRead } from "./singleread"
 
-workflow bwamem_se_wf
+workflow bwamemSE_wf
 {
     take:
-        csv_channel
+        csvChannel
 
     main:
-        bwamem2_index_path = file(bwamem2IndexPath())
-        bwamem2_index_channel = channel.of(tuple bwamem2_index_path.parent, bwamem2_index_path.name)
+        bwamem2IndexFile = file(bwamem2IndexPath())
+        bwamem2IndexDirValue    = channel.value(bwamem2IndexFile.parent)
+        bwamem2IndexPrefixValue = channel.value(bwamem2IndexFile.name)
 
-        fastq_channel =
-            csv_channel
-            .map
-            {
-                row ->
-                tuple basenameExtractor(row.Read1),
-                      1,
-                      file("${params.fastqDir}/${row.Read1}", checkIfExists: true, arity: '1')
+        fastqChannel =
+            csvChannel
+            .map { row ->
+                record(
+                    basename: basenameExtractor(row.Read1),
+                    read: 1,
+                    fastqFile: file("${params.fastqDir}/${row.Read1}", checkIfExists: true, arity: '1')
+                )
             }
 
-        split_fastq(fastq_channel)
+        splitFastq(fastqChannel)
 
         // Get the number of chunks for each base id.
         // See https://groups.google.com/g/nextflow/c/fScdmB_w_Yw and
         // https://github.com/danielecook/TIL/blob/master/Nextflow/groupKey.md
 
-        chunk_count_channel =
-            split_fastq.out
-            .map
-            {
-                basename, read, fastqFiles ->
-                tuple basename, sizeOf(fastqFiles)
-            }
+        chunkCountChannel =
+            splitFastq.out
+            .map { r -> record(basename: r.basename, chunkCount: sizeOf(r.fastqFiles)) }
 
-        per_chunk_channel =
-            split_fastq.out
-            .transpose()
-            .map
-            {
-                basename, read, fastq ->
-                tuple basename, extractChunkNumber(fastq), [ fastq ]
-            }
-            .combine(bwamem2_index_channel)
+        // Flatten the list of files in the channel to have a channel with
+        // a single file per item in a list, and add the BWA-mem2 index fields.
 
-        bwa_mem(per_chunk_channel)
-        singleread(bwa_mem.out, csv_channel, chunk_count_channel)
+        perChunkChannel =
+            splitFastq.out
+            .flatMap { r ->
+                r.fastqFiles.collect { f ->
+                    record(basename: r.basename, chunk: extractChunkNumber(f), sequenceFiles: [f])
+                }
+            }
+            .combine(bwamem2IndexDir: bwamem2IndexDirValue, bwamem2IndexPrefix: bwamem2IndexPrefixValue)
+
+        bwaMem(perChunkChannel)
+        singleread(bwaMem.out, csvChannel, chunkCountChannel)
 }

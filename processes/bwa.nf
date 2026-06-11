@@ -5,20 +5,24 @@
  * because import declarations are not permitted in strict-parser Nextflow scripts.
  */
 
+nextflow.enable.types = true
+ 
 include { extractChunkNumber } from '../components/functions'
 
 /*
  * Align a single fastq file.
  */
-process bwa_aln
+process bwaAln
 {
     label 'bwa'
 
     input:
-        tuple val(basename), val(read), path(fastqFile), path(bwaIndexDir), val(bwaIndexPrefix)
+        record(basename: String, read: Integer, fastqFile: Path, bwaIndexDir: Path, bwaIndexPrefix: String)
 
     output:
-        tuple val(basename), val(chunk), path("${basename}.r_${read}.${chunk}.sai"), path(outFastq)
+        record(basename: basename, chunk: chunk,
+               saiFile: file("${basename}.r_${read}.${chunk}.sai"),
+               fastqFile: file(outFastq))
 
     shell:
         chunk = extractChunkNumber(fastqFile)
@@ -30,16 +34,16 @@ process bwa_aln
 /*
  * Create BAM file for a BWA SAI file and its corresponding fastq file.
  */
-process bwa_samse
+process bwaSamSE
 {
     label 'bwa'
     cpus 2
 
     input:
-        tuple val(basename), val(chunk), path(saiFile), path(fastqFile), path(bwaIndexDir), val(bwaIndexPrefix)
+        record(basename: String, chunk: Integer, saiFile: Path, fastqFile: Path, bwaIndexDir: Path, bwaIndexPrefix: String)
 
     output:
-        tuple val(basename), val(chunk), path("${basename}.bwa.${chunk}.bam")
+        record(basename: basename, chunk: chunk, bam: file("${basename}.bwa.${chunk}.bam"))
 
     shell:
         outBam = "${basename}.bwa.${chunk}.bam"
@@ -49,23 +53,24 @@ process bwa_samse
 /*
  * Create BAM file for a two pairs of BWA SAI file the corresponding fastq file.
  */
-process bwa_sampe
+process bwaSamPE
 {
     label 'bwa'
     cpus 2
 
     input:
-        tuple val(basename), val(chunk),
-              path(saiFile1), path(fastqFile1),
-              path(saiFile2), path(fastqFile2),
-              path(bwaIndexDir), val(bwaIndexPrefix)
+        record(basename: String, chunk: Integer,
+               saiFile1: Path, fastqFile1: Path,
+               saiFile2: Path, fastqFile2: Path,
+               bwaIndexDir: Path, bwaIndexPrefix: String)
 
     output:
-        tuple val(basename), val(chunk), path("${basename}.bwa.${chunk}.bam")
+        record(basename: basename, chunk: chunk, bam: file("${basename}.bwa.${chunk}.bam"))
 
     shell:
+        // TODO: Check this. This is Claude's idea.
         // Lists need to explicitly be BlankSeparatedLists to render correctly
-        // in the expansion of the sampe template. Regular lists add square brackets.
+        // in the expansion of the bwasampe template. Regular lists add square brackets.
         saiFiles   = NfUtils.blankSepList(saiFile1, saiFile2)
         fastqFiles = NfUtils.blankSepList(fastqFile1, fastqFile2)
         outBam = "${basename}.bwa.${chunk}.bam"
