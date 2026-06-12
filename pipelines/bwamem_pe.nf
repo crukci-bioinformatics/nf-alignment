@@ -4,7 +4,6 @@
 
 include { sizeOf } from "plugin/nf-crukci-support"
 include { basenameExtractor; extractChunkNumber } from "../components/functions"
-include { bwamem2IndexPath } from "../components/defaults"
 include { splitFastq as splitFastq1; splitFastq as splitFastq2 } from "../processes/fastq"
 include { bwaMem } from "../processes/bwamem"
 include { pairedEnd } from "./pairedend"
@@ -16,8 +15,8 @@ workflow bwamemPE_wf
         csvChannel
 
     main:
-        bwamem2IndexFile = file(bwamem2IndexPath())
-        bwamem2IndexDirValue    = channel.value(bwamem2IndexFile.parent)
+        bwamem2IndexFile = file(APDefaults.bwamem2IndexPath(params))
+        bwamem2IndexDirValue = channel.value(bwamem2IndexFile.parent)
         bwamem2IndexPrefixValue = channel.value(bwamem2IndexFile.name)
 
         fastqChannel =

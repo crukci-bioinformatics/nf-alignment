@@ -3,7 +3,7 @@
  */
 
 nextflow.enable.types = true
- 
+
 include { safeName } from "plugin/nf-crukci-support"
 include { alignedFileName } from "../components/functions"
 

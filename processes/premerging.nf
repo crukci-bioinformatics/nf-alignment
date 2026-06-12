@@ -4,7 +4,7 @@
  */
 
 nextflow.enable.types = true
- 
+
 include { alignedFileName } from '../components/functions'
 
 process makeSafeForMerging

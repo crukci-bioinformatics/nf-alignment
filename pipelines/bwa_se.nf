@@ -4,7 +4,6 @@
 
 include { sizeOf } from "plugin/nf-crukci-support"
 include { basenameExtractor } from "../components/functions"
-include { bwaIndexPath } from "../components/defaults"
 include { splitFastq } from "../processes/fastq"
 include { bwaAln; bwaSamSE } from "../processes/bwa"
 include { singleRead } from "./singleread"
@@ -15,8 +14,8 @@ workflow bwaSE_wf
         csvChannel
 
     main:
-        bwaIndexFile = file(bwaIndexPath())
-        bwaIndexDirValue    = channel.value(bwaIndexFile.parent)
+        bwaIndexFile = file(APDefaults.bwaIndexPath(params))
+        bwaIndexDirValue = channel.value(bwaIndexFile.parent)
         bwaIndexPrefixValue = channel.value(bwaIndexFile.name)
 
         fastqChannel =

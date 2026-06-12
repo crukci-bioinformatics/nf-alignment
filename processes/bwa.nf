@@ -6,7 +6,7 @@
  */
 
 nextflow.enable.types = true
- 
+
 include { extractChunkNumber } from '../components/functions'
 
 /*

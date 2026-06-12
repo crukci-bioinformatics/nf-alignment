@@ -4,7 +4,6 @@
 
 include { sizeOf } from "plugin/nf-crukci-support"
 include { basenameExtractor; extractChunkNumber } from "../components/functions"
-include { starIndexPath } from "../components/defaults"
 include { splitFastq } from "../processes/fastq"
 include { STAR } from "../processes/star"
 include { singleRead } from "./singleread"
@@ -15,7 +14,7 @@ workflow starSE_wf
         csvChannel
 
     main:
-        starIndexValue = channel.value(file(starIndexPath()))
+        starIndexValue = channel.value(file(APDefaults.starIndexPath(params)))
 
         fastqChannel =
             csvChannel

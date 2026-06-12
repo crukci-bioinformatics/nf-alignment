@@ -4,7 +4,6 @@
 
 include { sizeOf } from "plugin/nf-crukci-support"
 include { basenameExtractor; extractChunkNumber } from "../components/functions"
-include { bowtie2IndexPath } from "../components/defaults"
 include { splitFastq } from "../processes/fastq"
 include { bowtieSE } from "../processes/bowtie"
 include { singleRead } from "./singleread"
@@ -16,8 +15,8 @@ workflow bowtieSE_wf
         csvChannel
 
     main:
-        bowtie2IndexFile = file(bowtie2IndexPath())
-        bowtie2IndexDirValue    = channel.value(bowtie2IndexFile.parent)
+        bowtie2IndexFile = file(APDefaults.bowtie2IndexPath(params))
+        bowtie2IndexDirValue = channel.value(bowtie2IndexFile.parent)
         bowtie2IndexPrefixValue = channel.value(bowtie2IndexFile.name)
 
         fastqChannel =

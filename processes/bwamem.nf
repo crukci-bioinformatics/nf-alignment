@@ -3,7 +3,7 @@
  */
 
 nextflow.enable.types = true
- 
+
 /*
  * Align with BWAmem (single read or paired end).
  * Needs a list of one or two FASTQ files for alignment in each record.

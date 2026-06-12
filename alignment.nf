@@ -17,26 +17,22 @@ include { starSE_wf as starSE } from "./pipelines/star_se"
 
 /*
  * Main work flow. For each line in alignment.csv, start aligning.
- * The aligner and end type are validated by checkParameters() above,
+ * The aligner and end type are validated by checkParameters(),
  * so the else-if chain below is exhaustive for all legal combinations.
  */
 workflow
 {
-    // Validate parameters against the schema, then check business logic and the alignment.csv file.
-    
-    validateParameters()
-    
-    if (!APUtils.checkParameters(params, log))
+    if (!APConfig.checkParameters(params, log))
     {
         exit 1
     }
-    if (!APUtils.checkAlignmentCSV(params, log))
+    if (!APConfig.checkAlignmentCSV(params, log))
     {
         exit 1
     }
-    
-    APUtils.displayParameters(params, log)
-    
+
+    APConfig.displayParameters(params, log)
+
     csvChannel = channel
         .fromPath(params.alignmentCSV)
         .splitCsv(header: true, quote: '"', strip: true)

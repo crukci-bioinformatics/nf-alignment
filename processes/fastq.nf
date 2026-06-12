@@ -3,7 +3,7 @@
  */
 
 nextflow.enable.types = true
- 
+
 /*
  * Split FASTQ file into chunks.
  */

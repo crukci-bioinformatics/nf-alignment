@@ -8,7 +8,7 @@
  */
 
 nextflow.enable.types = true
- 
+
 include { javaMemoryOptions; sizeOf; safeName } from "plugin/nf-crukci-support"
 include { alignedFileName } from '../components/functions'
 
@@ -204,7 +204,7 @@ process picardMergeOrMarkDuplicates
         record(basename: String, bams: List<Path>)
 
     output:
-        mergedBam: record(basename: basename, bam: file(outBam))
+        mergedBam: record(basename: basename, bam: path(outBam))
         index: path(outBai)
         metrics: path(metrics, optional: true)
 
@@ -272,7 +272,7 @@ process picardWGSMetrics
 
     input:
         record(basename: String, bam: Path, referenceFasta: Path)
-        val(countUnpairedReads)
+        countUnpairedReads: Long
 
     output:
         path metrics
@@ -443,7 +443,7 @@ process sampleWGSMetrics
 
     input:
         record(sampleName: String, bam: Path, referenceFasta: Path)
-        val(countUnpairedReads)
+        countUnpairedReads: Long
 
     output:
         path metrics
