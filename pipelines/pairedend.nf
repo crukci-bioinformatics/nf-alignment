@@ -21,7 +21,6 @@ include {
 } from "../processes/coverage"
 
 include { basenameExtractor } from "../components/functions"
-include { fastaReferencePath; genomeSizesPath; referenceRefFlatPath } from "../components/defaults"
 
 workflow pairedEnd
 {
@@ -31,23 +30,22 @@ workflow pairedEnd
         chunkCountChannel
 
     main:
-        def referenceFasta   = file(fastaReferencePath())
-        def genomeSizes      = file(genomeSizesPath())
-        def referenceRefFlat = file(referenceRefFlatPath())
+        def referenceFasta = file(APDefaults.fastaReferencePath(params))
+        def genomeSizes = file(APDefaults.genomeSizesPath(params))
+        def referenceRefFlat = file(APDefaults.referenceRefFlatPath(params))
 
         // Add sequencing info back to the channel for read groups.
         // It is available from sequencingInfoChannel, the rows from the CSV file.
         readGroupsChannel =
-            alignmentChannel
-            .join(
+            alignmentChannel.join(
                 sequencingInfoChannel.map { row ->
                     record(basename: basenameExtractor(row.Read1), sequencingInfo: row)
                 },
                 by: 'basename'
             )
 
-        rgBams = picardAddReadGroups(readGroupsChannel)
-        fixedBams = picardFixMate(rgBams)
+        readGroupBams = picardAddReadGroups(readGroupsChannel)
+        fixedBams = picardFixMate(readGroupBams)
 
         // Group the outputs by base name. Use the groupKey function to
         // allow things to run when each group is complete, rather than
@@ -55,12 +53,10 @@ workflow pairedEnd
 
         mergeChannel =
             fixedBams
-            .join(chunkCountChannel, by: 'basename')
-            .map { r ->
-                tuple groupKey(r.basename, r.chunkCount), r.bam
-            }
-            .groupTuple()
-            .map { basename, bams -> record(basename: basename.toString(), bams: bams) }
+                .join(chunkCountChannel, by: 'basename')
+                .map { r -> tuple(r.basename, r.chunkCount, r.bam) }
+                .groupBy()
+                .map { basename, bams -> record(basename: basename, bams: bams.toSorted()) }
 
         mergeResult = picardMergeOrMarkDuplicates(mergeChannel)
 
@@ -75,12 +71,12 @@ workflow pairedEnd
         // by base name.
         withInfoChannel =
             mergeResult.mergedBam
-            .join(
-                sequencingInfoChannel.map { row ->
-                    record(basename: basenameExtractor(row.Read1), sequencingInfo: row)
-                },
-                by: 'basename'
-            )
+                .join(
+                    sequencingInfoChannel.map { row ->
+                        record(basename: basenameExtractor(row.Read1), sequencingInfo: row)
+                    },
+                    by: 'basename'
+                )
 
         def safeForMerge = makeSafeForMerging(withInfoChannel)
 
@@ -93,20 +89,16 @@ workflow pairedEnd
 
         sampleCountChannel =
             sequencingInfoChannel
-            .map { row -> tuple row.SampleName, row.Read1 }
-            .groupTuple()
-            .map { sampleName, readFiles ->
-                record(sampleName: sampleName, chunkCount: readFiles.size())
-            }
+                .map { row -> tuple row.SampleName, row.Read1 }
+                .groupBy()
+                .map { sampleName, readFiles -> record(sampleName: sampleName, chunkCount: readFiles.size()) }
 
         sampleMergeChannel =
             safeSampleChannel
-            .join(sampleCountChannel, by: 'sampleName')
-            .map { r ->
-                tuple groupKey(r.sampleName, r.chunkCount), r.bam
-            }
-            .groupTuple()
-            .map { sampleName, bams -> record(sampleName: sampleName.toString(), bams: bams) }
+                .join(sampleCountChannel, by: 'sampleName')
+                .map { r -> tuple(r.sampleName, r.chunkCount, r.bam) }
+                .groupBy()
+                .map { sampleName, bams -> record(sampleName: sampleName, bams: bams.toSorted()) }
 
         sampleMergeResult = sampleMergeOrMarkDuplicates(sampleMergeChannel)
 
@@ -117,9 +109,9 @@ workflow pairedEnd
         sampleRnaSeqMetrics(sampleWithRef.map { r -> record(sampleName: r.sampleName, bam: r.bam, referenceFasta: r.referenceFasta, referenceRefFlat: referenceRefFlat) })
         sampleInsertSizeMetrics(sampleWithRef)
 
-        def covOut  = sampleGenomeCoverage(sampleMergeResult.sampleBam.map { r -> record(sampleName: r.sampleName, bam: r.bam, genomeSizes: genomeSizes) })
-        def sortOut = sampleBedSort(covOut.map { r -> record(sampleName: r.sampleName, bedgraph: r.bedgraph, genomeSizes: genomeSizes) })
-        sampleBedgraphToBigwig(sortOut.map { r -> record(sampleName: r.sampleName, sortedBed: r.sortedBed, genomeSizes: genomeSizes) })
+        def coverageChannel = sampleGenomeCoverage(sampleMergeResult.sampleBam.map { r -> record(sampleName: r.sampleName, bam: r.bam, genomeSizes: genomeSizes) })
+        def sortedBedChannel = sampleBedSort(coverageChannel.map { r -> record(sampleName: r.sampleName, bedgraph: r.bedgraph, genomeSizes: genomeSizes) })
+        sampleBedgraphToBigwig(sortedBedChannel.map { r -> record(sampleName: r.sampleName, sortedBed: r.sortedBed, genomeSizes: genomeSizes) })
 
     emit:
         bams        = mergeResult.mergedBam

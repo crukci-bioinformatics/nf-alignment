@@ -28,28 +28,26 @@ workflow bwamemSE_wf
                 )
             }
 
-        splitFastq(fastqChannel)
+        splitChannel = splitFastq(fastqChannel)
 
         // Get the number of chunks for each base id.
         // See https://groups.google.com/g/nextflow/c/fScdmB_w_Yw and
         // https://github.com/danielecook/TIL/blob/master/Nextflow/groupKey.md
 
         chunkCountChannel =
-            splitFastq.out
-            .map { r -> record(basename: r.basename, chunkCount: sizeOf(r.fastqFiles)) }
+            splitChannel.map { r -> record(basename: r.basename, chunkCount: sizeOf(r.fastqFiles)) }
 
         // Flatten the list of files in the channel to have a channel with
         // a single file per item in a list, and add the BWA-mem2 index fields.
 
         perChunkChannel =
-            splitFastq.out
-            .flatMap { r ->
+            splitChannel.flatMap { r ->
                 r.fastqFiles.collect { f ->
                     record(basename: r.basename, chunk: extractChunkNumber(f), sequenceFiles: [f],
                            bwamem2IndexDir: bwamem2IndexDir, bwamem2IndexPrefix: bwamem2IndexPrefix)
                 }
             }
 
-        bwaMem(perChunkChannel)
-        singleRead(bwaMem.out, csvChannel, chunkCountChannel)
+        bwaMemChannel = bwaMem(perChunkChannel)
+        singleRead(bwaMemChannel, csvChannel, chunkCountChannel)
 }

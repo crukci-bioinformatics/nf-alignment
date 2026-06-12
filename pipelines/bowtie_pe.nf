@@ -1,5 +1,5 @@
 /*
- * Bowtie 2 paired end pipeline inner work flow.
+ * Bowtie 2 paired end inner work flow.
  */
 
 include { sizeOf } from "plugin/nf-crukci-support"
@@ -39,24 +39,23 @@ workflow bowtiePE_wf
             fastqChannel
             .map { r -> record(basename: r.basename, read: 2, fastqFile: r.fastq2) }
 
-        splitFastq1(read1Channel)
-        splitFastq2(read2Channel)
+        splitChannel1 = splitFastq1(read1Channel)
+        splitChannel2 = splitFastq2(read2Channel)
 
         // Get the number of chunks for each base id (same for both channels).
         // See https://groups.google.com/g/nextflow/c/fScdmB_w_Yw and
         // https://github.com/danielecook/TIL/blob/master/Nextflow/groupKey.md
 
         chunkCountChannel =
-            splitFastq1.out
-            .map { r -> record(basename: r.basename, chunkCount: sizeOf(r.fastqFiles)) }
+            splitChannel1.map { r -> record(basename: r.basename, chunkCount: sizeOf(r.fastqFiles)) }
 
         // Flatten the list of files in both channels to have two channels with
         // a single file per item. Also extract the chunk number from the file name.
         // Name the read fields 'read1' and 'read2' for the bowtiePe process.
+        // For the strict parser, we need to create a single field in both called "key" for joining.
 
         perChunkChannel1 =
-            splitFastq1.out
-            .flatMap { r ->
+            splitChannel1.flatMap { r ->
                 r.fastqFiles.collect { f ->
                     def chunkNum = extractChunkNumber(f)
                     record(key: "${r.basename}:${chunkNum}", basename: r.basename, chunk: chunkNum, read1: f)
@@ -64,23 +63,21 @@ workflow bowtiePE_wf
             }
 
         perChunkChannel2 =
-            splitFastq2.out
-            .flatMap { r ->
+            splitChannel2.flatMap { r ->
                 r.fastqFiles.collect { f ->
                     def chunkNum = extractChunkNumber(f)
                     record(key: "${r.basename}:${chunkNum}", basename: r.basename, chunk: chunkNum, read2: f)
                 }
             }
 
-        // Join these channels by base name and chunk number (using a composite key),
-        // then add the index.
+        // Join these channels by the "key" field, then remove the key and add the index.
 
         combinedChunkChannel =
             perChunkChannel1
-            .join(perChunkChannel2, by: 'key')
-            .map { r -> record(basename: r.basename, chunk: r.chunk, read1: r.read1, read2: r.read2,
-                               bowtie2IndexDir: bowtie2IndexDir, bowtie2IndexPrefix: bowtie2IndexPrefix) }
+                .join(perChunkChannel2, by: 'key')
+                .map { r -> record(basename: r.basename, chunk: r.chunk, read1: r.read1, read2: r.read2,
+                                   bowtie2IndexDir: bowtie2IndexDir, bowtie2IndexPrefix: bowtie2IndexPrefix) }
 
-        bowtiePE(combinedChunkChannel)
-        pairedEnd(bowtiePE.out, csvChannel, chunkCountChannel)
+        bowtieChannel = bowtiePE(combinedChunkChannel)
+        pairedEnd(bowtieChannel, csvChannel, chunkCountChannel)
 }

@@ -68,11 +68,8 @@ process bwaSamPE
         record(basename: basename, chunk: chunk, bam: file("${basename}.bwa.${chunk}.bam"))
 
     shell:
-        // TODO: Check this. This is Claude's idea.
-        // Lists need to explicitly be BlankSeparatedLists to render correctly
-        // in the expansion of the bwasampe template. Regular lists add square brackets.
-        saiFiles   = APUtils.blankSepList(saiFile1, saiFile2)
-        fastqFiles = APUtils.blankSepList(fastqFile1, fastqFile2)
+        saiFiles = [ saiFile1, saiFile2 ]
+        fastqFiles = [ fastqFile1, fastqFile2 ]
         outBam = "${basename}.bwa.${chunk}.bam"
         template "bwa/bwasampe.sh"
 }

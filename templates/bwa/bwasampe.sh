@@ -5,8 +5,8 @@ set -o pipefail
 bwa sampe \
     !{params.bwaSamOptions} \
     "!{bwaIndexDir}/!{bwaIndexPrefix}" \
-    !{saiFiles} \
-    !{fastqFiles} | \
+    !{saiFiles.join(' ')} \
+    !{fastqFiles.join(' ')} | \
 samtools \
     view -b -h \
     -o "!{outBam}"
