@@ -25,10 +25,13 @@ String alignedFileName(Object basename)
 /*
  * Extract the chunk number from a file produced by splitFastq. It is the
  * six digits just before the .fq or .fq.gz suffix.
+ * Note it is returned as a string with the full six digits, not a number.
+ * This helps with sorting by name, as we don't have to sort numerically
+ * aware: we have the zeroes that do the work!
  */
-Integer extractChunkNumber(Path f)
+String extractChunkNumber(Path f)
 {
     def m = f.name =~ /.+-S(\d{6})\.fq(\.gz)?$/
     assert m : "Don't have file pattern with chunk numbers: '${f.name}'"
-    return Integer.valueOf(m[0][1], 10)
+    return m[0][1]
 }

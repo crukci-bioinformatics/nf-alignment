@@ -40,7 +40,7 @@ process bwaSamSE
     cpus 2
 
     input:
-        record(basename: String, chunk: Integer, saiFile: Path, fastqFile: Path, bwaIndexDir: Path, bwaIndexPrefix: String)
+        record(basename: String, chunk: String, saiFile: Path, fastqFile: Path, bwaIndexDir: Path, bwaIndexPrefix: String)
 
     output:
         record(basename: basename, chunk: chunk, bam: file("${basename}.bwa.${chunk}.bam"))
@@ -59,7 +59,7 @@ process bwaSamPE
     cpus 2
 
     input:
-        record(basename: String, chunk: Integer,
+        record(basename: String, chunk: String,
                saiFile1: Path, fastqFile1: Path,
                saiFile2: Path, fastqFile2: Path,
                bwaIndexDir: Path, bwaIndexPrefix: String)

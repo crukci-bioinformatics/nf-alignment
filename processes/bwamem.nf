@@ -16,7 +16,7 @@ process bwaMem
     maxRetries 2
 
     input:
-        record(basename: String, chunk: Integer, sequenceFiles: List<Path>, bwamem2IndexDir: Path, bwamem2IndexPrefix: String)
+        record(basename: String, chunk: String, sequenceFiles: List<Path>, bwamem2IndexDir: Path, bwamem2IndexPrefix: String)
 
     output:
         record(basename: basename, chunk: chunk, bam: file("${basename}.bwamem.${chunk}.bam"))

@@ -16,7 +16,7 @@ process STAR
     maxRetries 2
 
     input:
-        record(basename: String, chunk: Integer, sequenceFiles: List<Path>, starIndex: Path)
+        record(basename: String, chunk: String, sequenceFiles: List<Path>, starIndex: Path)
 
     output:
         record(basename: basename, chunk: chunk, bam: file("${basename}/Aligned.out.bam"))

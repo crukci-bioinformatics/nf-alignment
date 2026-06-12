@@ -15,7 +15,7 @@ process bowtieSE
     maxRetries 2
 
     input:
-        record(basename: String, chunk: Integer, read1: Path, bowtie2IndexDir: Path, bowtie2IndexPrefix: String)
+        record(basename: String, chunk: String, read1: Path, bowtie2IndexDir: Path, bowtie2IndexPrefix: String)
 
     output:
         record(basename: basename, chunk: chunk, bam: file("${basename}.bowtie.${chunk}.bam"))
@@ -36,7 +36,7 @@ process bowtiePE
     maxRetries 2
 
     input:
-        record(basename: String, chunk: Integer, read1: Path, read2: Path, bowtie2IndexDir: Path, bowtie2IndexPrefix: String)
+        record(basename: String, chunk: String, read1: Path, read2: Path, bowtie2IndexDir: Path, bowtie2IndexPrefix: String)
 
     output:
         record(basename: basename, chunk: chunk, bam: file("${basename}.bowtie.${chunk}.bam"))

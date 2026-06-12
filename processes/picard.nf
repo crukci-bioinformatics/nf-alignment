@@ -101,7 +101,7 @@ process picardAddReadGroups
     label "picardSmall"
 
     input:
-        record(basename: String, chunk: Integer, bam: Path, sequencingInfo: Map)
+        record(basename: String, chunk: String, bam: Path, sequencingInfo: Map)
 
     output:
         record(basename: basename, chunk: chunk, bam: file(outBam))
@@ -146,7 +146,7 @@ process picardSortSam
     label "picard"
 
     input:
-        record(basename: String, chunk: Integer, bam: Path)
+        record(basename: String, chunk: String, bam: Path)
 
     output:
         record(basename: basename, bam: file(outBam))
@@ -173,7 +173,7 @@ process picardFixMate
     cpus 2
 
     input:
-        record(basename: String, chunk: Integer, bam: Path)
+        record(basename: String, chunk: String, bam: Path)
 
     output:
         record(basename: basename, bam: file(outBam))

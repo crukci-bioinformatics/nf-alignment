@@ -30,32 +30,24 @@ workflow bwaPE_wf
 
         // Split into two channels, one read in each, for BWA aln.
 
-        read1Channel =
-            fastqChannel
-            .map { r -> record(basename: r.basename, read: 1, fastqFile: r.fastq1) }
-
-        read2Channel =
-            fastqChannel
-            .map { r -> record(basename: r.basename, read: 2, fastqFile: r.fastq2) }
+        read1Channel = fastqChannel.map { r -> record(basename: r.basename, read: 1, fastqFile: r.fastq1) }
+        read2Channel = fastqChannel.map { r -> record(basename: r.basename, read: 2, fastqFile: r.fastq2) }
 
         // Split the files in these channels into chunks.
 
-        splitFastq1(read1Channel)
-        splitFastq2(read2Channel)
+        splitChannel1 = splitFastq1(read1Channel)
+        splitChannel2 = splitFastq2(read2Channel)
 
         // Get the number of chunks for each base id (same for both channels).
         // See https://groups.google.com/g/nextflow/c/fScdmB_w_Yw and
         // https://github.com/danielecook/TIL/blob/master/Nextflow/groupKey.md
 
-        chunkCountChannel =
-            splitFastq1.out
-            .map { r -> record(basename: r.basename, chunkCount: sizeOf(r.fastqFiles)) }
+        chunkCountChannel = splitChannel1.map { r -> record(basename: r.basename, chunkCount: sizeOf(r.fastqFiles)) }
 
         // Flatten the chunks in each channel and add the BWA index fields.
 
         read1PerChunkChannel =
-            splitFastq1.out
-            .flatMap { r ->
+            splitChannel1.flatMap { r ->
                 r.fastqFiles.collect { f ->
                     record(basename: r.basename, read: r.read, fastqFile: f,
                            bwaIndexDir: bwaIndexDir, bwaIndexPrefix: bwaIndexPrefix)
@@ -63,8 +55,7 @@ workflow bwaPE_wf
             }
 
         read2PerChunkChannel =
-            splitFastq2.out
-            .flatMap { r ->
+            splitChannel2.flatMap { r ->
                 r.fastqFiles.collect { f ->
                     record(basename: r.basename, read: r.read, fastqFile: f,
                            bwaIndexDir: bwaIndexDir, bwaIndexPrefix: bwaIndexPrefix)
@@ -73,30 +64,29 @@ workflow bwaPE_wf
 
         // Align the chunks in independent channels.
 
-        bwaAln1(read1PerChunkChannel)
-        bwaAln2(read2PerChunkChannel)
+        alignChannel1 = bwaAln1(read1PerChunkChannel)
+        alignChannel2 = bwaAln2(read2PerChunkChannel)
 
         // Join the output of these two channels into one, grouping on base name and chunk number.
         // Rename the sai/fastq fields so they don't collide when the two records are merged,
         // then add the index fields for the sampe step.
 
-        sampeChannel =
-            bwaAln1.out.map { r ->
-                record(key: "${r.basename}:${r.chunk}", basename: r.basename, chunk: r.chunk, saiFile1: r.saiFile, fastqFile1: r.fastqFile)
-            }
-            .join(
-                bwaAln2.out.map { r ->
-                    record(key: "${r.basename}:${r.chunk}", basename: r.basename, chunk: r.chunk, saiFile2: r.saiFile, fastqFile2: r.fastqFile)
-                },
-                by: 'key',
-                failOnDuplicate: true,
-                failOnMismatch: true
-            )
-            .map { r -> record(basename: r.basename, chunk: r.chunk,
-                               saiFile1: r.saiFile1, fastqFile1: r.fastqFile1,
-                               saiFile2: r.saiFile2, fastqFile2: r.fastqFile2,
-                               bwaIndexDir: bwaIndexDir, bwaIndexPrefix: bwaIndexPrefix) }
+        joiningChannel1 = alignChannel1.map { r ->
+            record(joinKey: "${r.basename}:${r.chunk}", basename: r.basename, chunk: r.chunk, saiFile1: r.saiFile, fastqFile1: r.fastqFile)
+        }
 
-        bwaSamPE(sampeChannel)
-        pairedEnd(bwaSamPE.out, csvChannel, chunkCountChannel)
+        joiningChannel2 = alignChannel2.map { r ->
+            record(joinKey: "${r.basename}:${r.chunk}", basename: r.basename, chunk: r.chunk, saiFile2: r.saiFile, fastqFile2: r.fastqFile)
+        }
+
+        samChannel =
+            joiningChannel1
+                .join(joiningChannel2, by: 'joinKey')
+                .map { r -> record(basename: r.basename, chunk: r.chunk,
+                                   saiFile1: r.saiFile1, fastqFile1: r.fastqFile1,
+                                   saiFile2: r.saiFile2, fastqFile2: r.fastqFile2,
+                                   bwaIndexDir: bwaIndexDir, bwaIndexPrefix: bwaIndexPrefix) }
+
+        bwaChannel = bwaSamPE(samChannel)
+        pairedEnd(bwaChannel, csvChannel, chunkCountChannel)
 }
