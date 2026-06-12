@@ -47,17 +47,16 @@ workflow singleRead
         readGroupBams = picardAddReadGroups(readGroupsChannel)
         sortedBams = picardSortSam(readGroupBams)
 
-        // Group the outputs by base name. Use the groupKey function to
-        // allow things to run when each group is complete, rather than
-        // waiting for everything.
+        // Group the outputs by base name. Include the number of files per base name in
+        // the grouping so we don't have to wait for everything before starting this
+        // (the old "groupKey" functionality).
 
         mergeChannel =
             sortedBams
                 .join(chunkCountChannel, by: 'basename')
                 .map { r -> tuple(r.basename, r.chunkCount, r.bam) }
                 .groupBy()
-                .view { basename, bams -> "After grouping, unit \"${basename}\" contains: ${bams}" }
-                .map { basename, bams -> record(basename: basename, bams: bams.toSorted()) }
+                .map { basename, bams -> record(basename: basename, bams: bams.toList()) }
 
         mergeResult = picardMergeOrMarkDuplicates(mergeChannel)
 
@@ -84,8 +83,9 @@ workflow singleRead
         safeSampleChannel = safeForMerge
             .map { r -> record(sampleName: r.sequencingInfo.SampleName, bam: r.bam) }
 
-        // Get the number of files for each sample and provide a groupKey for merging
-        // so it can start each group once all the files are received.
+        // Get the number of files for each sample and include that as a size parameter
+        // for merging so it can start each group once all the files are received
+        // (the old "groupKey" functionality).
 
         sampleCountChannel =
             sequencingInfoChannel
@@ -100,7 +100,7 @@ workflow singleRead
                 .join(sampleCountChannel, by: 'sampleName')
                 .map { r -> tuple(r.sampleName, r.chunkCount, r.bam) }
                 .groupBy()
-                .map { sampleName, bams -> record(sampleName: sampleName, bams: bams.toSorted()) }
+                .map { sampleName, bams -> record(sampleName: sampleName, bams: bams.toList()) }
 
         sampleMergeResult = sampleMergeOrMarkDuplicates(sampleMergeChannel)
 
