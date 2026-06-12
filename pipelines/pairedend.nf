@@ -39,11 +39,11 @@ workflow pairedEnd
         // It is available from sequencingInfoChannel, the rows from the CSV file.
         readGroupsChannel =
             alignmentChannel
-            .combine(
+            .join(
                 sequencingInfoChannel.map { row ->
                     record(basename: basenameExtractor(row.Read1), sequencingInfo: row)
                 },
-                by: ['basename']
+                by: 'basename'
             )
 
         rgBams = picardAddReadGroups(readGroupsChannel)
@@ -55,12 +55,12 @@ workflow pairedEnd
 
         mergeChannel =
             fixedBams
-            .combine(chunkCountChannel, by: ['basename'])
+            .join(chunkCountChannel, by: 'basename')
             .map { r ->
                 tuple groupKey(r.basename, r.chunkCount), r.bam
             }
             .groupTuple()
-            .map { basename, bams -> record(basename: basename, bams: bams) }
+            .map { basename, bams -> record(basename: basename.toString(), bams: bams) }
 
         mergeResult = picardMergeOrMarkDuplicates(mergeChannel)
 
@@ -75,11 +75,11 @@ workflow pairedEnd
         // by base name.
         withInfoChannel =
             mergeResult.mergedBam
-            .combine(
+            .join(
                 sequencingInfoChannel.map { row ->
                     record(basename: basenameExtractor(row.Read1), sequencingInfo: row)
                 },
-                by: ['basename']
+                by: 'basename'
             )
 
         def safeForMerge = makeSafeForMerging(withInfoChannel)
@@ -101,12 +101,12 @@ workflow pairedEnd
 
         sampleMergeChannel =
             safeSampleChannel
-            .combine(sampleCountChannel, by: ['sampleName'])
+            .join(sampleCountChannel, by: 'sampleName')
             .map { r ->
                 tuple groupKey(r.sampleName, r.chunkCount), r.bam
             }
             .groupTuple()
-            .map { sampleName, bams -> record(sampleName: sampleName, bams: bams) }
+            .map { sampleName, bams -> record(sampleName: sampleName.toString(), bams: bams) }
 
         sampleMergeResult = sampleMergeOrMarkDuplicates(sampleMergeChannel)
 

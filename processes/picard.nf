@@ -269,7 +269,7 @@ process picardWGSMetrics
 
     input:
         record(basename: String, bam: Path, referenceFasta: Path)
-        countUnpairedReads: Long
+        countUnpairedReads: Boolean
 
     output:
         file(metrics)
@@ -440,7 +440,7 @@ process sampleWGSMetrics
 
     input:
         record(sampleName: String, bam: Path, referenceFasta: Path)
-        countUnpairedReads: Long
+        countUnpairedReads: Boolean
 
     output:
         file(metrics)

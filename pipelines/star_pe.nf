@@ -54,7 +54,8 @@ workflow starPE_wf
             splitFastq1.out
             .flatMap { r ->
                 r.fastqFiles.collect { f ->
-                    record(basename: r.basename, chunk: extractChunkNumber(f), read1: f)
+                    def chunkNum = extractChunkNumber(f)
+                    record(key: "${r.basename}:${chunkNum}", basename: r.basename, chunk: chunkNum, read1: f)
                 }
             }
 
@@ -62,16 +63,17 @@ workflow starPE_wf
             splitFastq2.out
             .flatMap { r ->
                 r.fastqFiles.collect { f ->
-                    record(basename: r.basename, chunk: extractChunkNumber(f), read2: f)
+                    def chunkNum = extractChunkNumber(f)
+                    record(key: "${r.basename}:${chunkNum}", basename: r.basename, chunk: chunkNum, read2: f)
                 }
             }
 
-        // Join these channels by base name and chunk number, combine the two reads
-        // into a list for STAR, and add the STAR index.
+        // Join these channels by base name and chunk number (using a composite key),
+        // combine the two reads into a list for STAR, and add the STAR index.
 
         combinedChunkChannel =
             perChunkChannel1
-            .join(perChunkChannel2, by: ['basename', 'chunk'])
+            .join(perChunkChannel2, by: 'key')
             .map { r -> record(basename: r.basename, chunk: r.chunk, sequenceFiles: [r.read1, r.read2], starIndex: starIndex) }
 
         STAR(combinedChunkChannel)

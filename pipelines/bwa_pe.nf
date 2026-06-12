@@ -82,13 +82,13 @@ workflow bwaPE_wf
 
         sampeChannel =
             bwaAln1.out.map { r ->
-                record(basename: r.basename, chunk: r.chunk, saiFile1: r.saiFile, fastqFile1: r.fastqFile)
+                record(key: "${r.basename}:${r.chunk}", basename: r.basename, chunk: r.chunk, saiFile1: r.saiFile, fastqFile1: r.fastqFile)
             }
             .join(
                 bwaAln2.out.map { r ->
-                    record(basename: r.basename, chunk: r.chunk, saiFile2: r.saiFile, fastqFile2: r.fastqFile)
+                    record(key: "${r.basename}:${r.chunk}", basename: r.basename, chunk: r.chunk, saiFile2: r.saiFile, fastqFile2: r.fastqFile)
                 },
-                by: ['basename', 'chunk'],
+                by: 'key',
                 failOnDuplicate: true,
                 failOnMismatch: true
             )

@@ -58,7 +58,8 @@ workflow bowtiePE_wf
             splitFastq1.out
             .flatMap { r ->
                 r.fastqFiles.collect { f ->
-                    record(basename: r.basename, chunk: extractChunkNumber(f), read1: f)
+                    def chunkNum = extractChunkNumber(f)
+                    record(key: "${r.basename}:${chunkNum}", basename: r.basename, chunk: chunkNum, read1: f)
                 }
             }
 
@@ -66,15 +67,17 @@ workflow bowtiePE_wf
             splitFastq2.out
             .flatMap { r ->
                 r.fastqFiles.collect { f ->
-                    record(basename: r.basename, chunk: extractChunkNumber(f), read2: f)
+                    def chunkNum = extractChunkNumber(f)
+                    record(key: "${r.basename}:${chunkNum}", basename: r.basename, chunk: chunkNum, read2: f)
                 }
             }
 
-        // Join these channels by base name and chunk number, then add the index.
+        // Join these channels by base name and chunk number (using a composite key),
+        // then add the index.
 
         combinedChunkChannel =
             perChunkChannel1
-            .join(perChunkChannel2, by: ['basename', 'chunk'])
+            .join(perChunkChannel2, by: 'key')
             .map { r -> record(basename: r.basename, chunk: r.chunk, read1: r.read1, read2: r.read2,
                                bowtie2IndexDir: bowtie2IndexDir, bowtie2IndexPrefix: bowtie2IndexPrefix) }
 

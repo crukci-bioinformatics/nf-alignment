@@ -23,7 +23,7 @@ STAR \
     --genomeDir "!{starIndex}" \
     --outTmpDir "temp" \
     --outFileNamePrefix "!{basename}/" \
-    --readFilesIn !{sequenceFiles}
+    --readFilesIn !{sequenceFiles.join(' ')}
 
 
 STATUS=$?
