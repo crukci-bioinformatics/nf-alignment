@@ -14,9 +14,9 @@ workflow bwamemSE_wf
         csvChannel
 
     main:
-        bwamem2IndexFile = file(APDefaults.bwamem2IndexPath(params))
-        bwamem2IndexDirValue = channel.value(bwamem2IndexFile.parent)
-        bwamem2IndexPrefixValue = channel.value(bwamem2IndexFile.name)
+        def bwamem2IndexPath = Path.of(APDefaults.bwamem2IndexPath(params))
+        def bwamem2IndexDir = bwamem2IndexPath.parent
+        def bwamem2IndexPrefix = bwamem2IndexPath.fileName.toString()
 
         fastqChannel =
             csvChannel
@@ -45,11 +45,11 @@ workflow bwamemSE_wf
             splitFastq.out
             .flatMap { r ->
                 r.fastqFiles.collect { f ->
-                    record(basename: r.basename, chunk: extractChunkNumber(f), sequenceFiles: [f])
+                    record(basename: r.basename, chunk: extractChunkNumber(f), sequenceFiles: [f],
+                           bwamem2IndexDir: bwamem2IndexDir, bwamem2IndexPrefix: bwamem2IndexPrefix)
                 }
             }
-            .combine(bwamem2IndexDir: bwamem2IndexDirValue, bwamem2IndexPrefix: bwamem2IndexPrefixValue)
 
         bwaMem(perChunkChannel)
-        singleread(bwaMem.out, csvChannel, chunkCountChannel)
+        singleRead(bwaMem.out, csvChannel, chunkCountChannel)
 }

@@ -17,14 +17,14 @@ process sampleGenomeCoverage
 
     publishDir params.sampleBamDir, mode: "link", pattern: "*.bedgraph"
 
-    when:
-        params.createCoverage
-
     input:
         record(sampleName: String, bam: Path, genomeSizes: Path)
 
     output:
         record(sampleName: sampleName, bedgraph: file(bedgraph))
+
+    when:
+        params.createCoverage
 
     shell:
         inBam = bam

@@ -14,9 +14,9 @@ workflow bwaSE_wf
         csvChannel
 
     main:
-        bwaIndexFile = file(APDefaults.bwaIndexPath(params))
-        bwaIndexDirValue = channel.value(bwaIndexFile.parent)
-        bwaIndexPrefixValue = channel.value(bwaIndexFile.name)
+        def bwaIndexPath = Path.of(APDefaults.bwaIndexPath(params))
+        def bwaIndexDir = bwaIndexPath.parent
+        def bwaIndexPrefix = bwaIndexPath.fileName.toString()
 
         fastqChannel =
             csvChannel
@@ -45,16 +45,17 @@ workflow bwaSE_wf
             splitFastq.out
             .flatMap { r ->
                 r.fastqFiles.collect { f ->
-                    record(basename: r.basename, read: r.read, fastqFile: f)
+                    record(basename: r.basename, read: r.read, fastqFile: f,
+                           bwaIndexDir: bwaIndexDir, bwaIndexPrefix: bwaIndexPrefix)
                 }
             }
-            .combine(bwaIndexDir: bwaIndexDirValue, bwaIndexPrefix: bwaIndexPrefixValue)
 
         bwaAln(perChunkChannel)
 
         // Add the index fields again for the samse step.
-        bwaSamse(
-            bwaAln.out.combine(bwaIndexDir: bwaIndexDirValue, bwaIndexPrefix: bwaIndexPrefixValue)
+        bwaSamSE(
+            bwaAln.out.map { r -> record(basename: r.basename, chunk: r.chunk, saiFile: r.saiFile, fastqFile: r.fastqFile,
+                                         bwaIndexDir: bwaIndexDir, bwaIndexPrefix: bwaIndexPrefix) }
         )
-        singleread(bwaSamse.out, csvChannel, chunkCountChannel)
+        singleRead(bwaSamSE.out, csvChannel, chunkCountChannel)
 }

@@ -1,23 +1,54 @@
 import static APDefaults.*
 
+import static java.util.Objects.requireNonNull
+
+import java.nio.file.Files
+import java.nio.file.Path
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
+import org.slf4j.Logger
 
 /**
  * Configuration checking functions for the alignment pipeline.
  */
 class APConfig
 {
-    private static boolean notExists(String path)
+    private static Path toPath(Object v)
     {
-        def f = new File(path)
-        return !f.exists()
+        requireNonNull(v, "No path given")
+        if (v instanceof Path)
+        {
+            return v
+        }
+        if (v instanceof File)
+        {
+            return v.toPath()
+        }
+        return Path.of(v.toString())
     }
 
-    private static boolean notDirectory(String path)
+    private static boolean notExists(Object path)
     {
-        def f = new File(path)
-        return !f.directory
+        return !Files.exists(toPath(path))
+    }
+
+    private static boolean notDirectory(Object path)
+    {
+        return !Files.isDirectory(toPath(path))
+    }
+
+    private static void logException(Logger log, Throwable e)
+    {
+        Throwable t = e
+        while (t.cause)
+        {
+            t = t.cause
+        }
+
+        def sw = new StringWriter(1000)
+        def pw = new PrintWriter(sw)
+        t.printStackTrace(pw)
+        log.error sw.toString()
     }
 
     /**
@@ -28,11 +59,8 @@ class APConfig
      *
      * @return True if all is well and the pipeline can run, false otherwise.
      */
-    static boolean checkParameters(params, log)
+    static boolean checkParameters(Map params, Logger log)
     {
-        log.info("params is a ${params.class.name}")
-        log.info("log is a ${log.class.name}")
-
         boolean errors = false
         boolean referenceRootWarned = false
         String referenceRootWarning = 'Reference data root directory not set. Use --referenceRoot with path to the top of the reference structure.'
@@ -276,7 +304,7 @@ class APConfig
      * @param params The Nextflow parameters.
      * @param log The Nextflow logger.
      */
-    static void displayParameters(params, log)
+    static void displayParameters(Map params, Logger log)
     {
         boolean pairedEnd = pairedEnd(params)
 
@@ -326,12 +354,12 @@ class APConfig
      *
      * @return True if all is well and the pipeline can run, false otherwise.
      */
-    static boolean checkAlignmentCSV(params, log)
+    static boolean checkAlignmentCSV(Map params, Logger log)
     {
         boolean ok = true
         try
         {
-            def driverFile = file(params.alignmentCSV)
+            def driverFile = new File(params.alignmentCSV as String)
             driverFile.withReader('UTF-8')
             {
                 stream ->
@@ -347,7 +375,7 @@ class APConfig
                             log.error "${params.alignmentCSV} must contain a column 'Read1'."
                             ok = false
                         }
-                        if (pairedEnd() && !record.isMapped('Read2'))
+                        if (pairedEnd(params) && !record.isMapped('Read2'))
                         {
                             log.error "${params.alignmentCSV} must contain a column 'Read2' for aligning paired end."
                             ok = false
@@ -370,7 +398,7 @@ class APConfig
                         log.error "No 'Read1' file name set on line ${rowNum}."
                         ok = false
                     }
-                    if (pairedEnd() && !record.get('Read2'))
+                    if (pairedEnd(params) && !record.get('Read2'))
                     {
                         log.error "No 'Read2' file name set on line ${rowNum}."
                         ok = false
@@ -385,7 +413,7 @@ class APConfig
         }
         catch (Exception e)
         {
-            logException(e)
+            logException(log, e)
             ok = false
         }
 

@@ -14,7 +14,7 @@ workflow starSE_wf
         csvChannel
 
     main:
-        starIndexValue = channel.value(file(APDefaults.starIndexPath(params)))
+        def starIndex = file(APDefaults.starIndexPath(params))
 
         fastqChannel =
             csvChannel
@@ -43,11 +43,10 @@ workflow starSE_wf
             splitFastq.out
             .flatMap { r ->
                 r.fastqFiles.collect { f ->
-                    record(basename: r.basename, chunk: extractChunkNumber(f), sequenceFiles: [f])
+                    record(basename: r.basename, chunk: extractChunkNumber(f), sequenceFiles: [f], starIndex: starIndex)
                 }
             }
-            .combine(starIndex: starIndexValue)
 
         STAR(perChunkChannel)
-        singleread(STAR.out, csvChannel, chunkCountChannel)
+        singleRead(STAR.out, csvChannel, chunkCountChannel)
 }

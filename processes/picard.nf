@@ -204,9 +204,9 @@ process picardMergeOrMarkDuplicates
         record(basename: String, bams: List<Path>)
 
     output:
-        mergedBam: record(basename: basename, bam: path(outBam))
-        index: path(outBai)
-        metrics: path(metrics, optional: true)
+        mergedBam = record(basename: basename, bam: file(outBam))
+        index = file(outBai)
+        metrics = file(metrics, optional: true)
 
     shell:
         inBams = bams
@@ -239,14 +239,14 @@ process picardAlignmentMetrics
 
     publishDir params.bamDir, mode: "link"
 
-    when:
-        params.alignmentMetrics
-
     input:
         record(basename: String, bam: Path, referenceFasta: Path)
 
     output:
-        path metrics
+        file(metrics)
+
+    when:
+        params.alignmentMetrics
 
     shell:
         inBam = bam
@@ -267,15 +267,15 @@ process picardWGSMetrics
 
     publishDir params.bamDir, mode: "link"
 
-    when:
-        params.wgsMetrics
-
     input:
         record(basename: String, bam: Path, referenceFasta: Path)
         countUnpairedReads: Long
 
     output:
-        path metrics
+        file(metrics)
+
+    when:
+        params.wgsMetrics
 
     shell:
         inBam = bam
@@ -295,14 +295,14 @@ process picardRnaSeqMetrics
 
     publishDir params.bamDir, mode: "link"
 
-    when:
-        params.rnaseqMetrics
-
     input:
         record(basename: String, bam: Path, referenceFasta: Path, referenceRefFlat: Path)
 
     output:
-        path metrics
+        file(metrics)
+
+    when:
+        params.rnaseqMetrics
 
     shell:
         inBam = bam
@@ -325,14 +325,14 @@ process picardInsertSizeMetrics
 
     publishDir params.bamDir, mode: "link"
 
-    when:
-        params.insertSizeMetrics
-
     input:
         record(basename: String, bam: Path, referenceFasta: Path)
 
     output:
-        path metrics, optional: true
+        file(metrics, optional: true)
+
+    when:
+        params.insertSizeMetrics
 
     shell:
         inBam = bam
@@ -355,16 +355,16 @@ process sampleMergeOrMarkDuplicates
 
     publishDir params.sampleBamDir, mode: "link"
 
-    when:
-        params.mergeSamples
-
     input:
         record(sampleName: String, bams: List<Path>)
 
     output:
-        record(sampleName: sampleName, bam: file(outBam)), emit: sampleBam
-        path outIndex, optional: true
-        path metrics, optional: true
+        sampleBam = record(sampleName: sampleName, bam: file(outBam))
+        outIndex = file(outIndex, optional: true)
+        metrics = file(metrics, optional: true)
+
+    when:
+        params.mergeSamples
 
     shell:
         inBams = bams
@@ -407,14 +407,14 @@ process sampleAlignmentMetrics
 
     publishDir params.sampleBamDir, mode: "link"
 
-    when:
-        params.alignmentMetrics
-
     input:
         record(sampleName: String, bam: Path, referenceFasta: Path)
 
     output:
-        path metrics
+        file(metrics)
+
+    when:
+        params.alignmentMetrics
 
     shell:
         inBam = bam
@@ -438,15 +438,15 @@ process sampleWGSMetrics
 
     publishDir params.sampleBamDir, mode: "link"
 
-    when:
-        params.wgsMetrics
-
     input:
         record(sampleName: String, bam: Path, referenceFasta: Path)
         countUnpairedReads: Long
 
     output:
-        path metrics
+        file(metrics)
+
+    when:
+        params.wgsMetrics
 
     shell:
         inBam = bam
@@ -469,20 +469,20 @@ process sampleRnaSeqMetrics
 
     publishDir params.sampleBamDir, mode: "link"
 
-    when:
-        params.rnaseqMetrics
-
     input:
         record(sampleName: String, bam: Path, referenceFasta: Path, referenceRefFlat: Path)
 
     output:
-        path metrics
+        file(metrics)
+
+    when:
+        params.rnaseqMetrics
 
     shell:
         inBam = bam
         safeSampleName = safeName(sampleName)
         metrics = "${alignedFileName(safeSampleName)}.rnaseq.txt"
-        strandSpecificity = rnaseqStrandSpecificity()
+        strandSpecificity = APDefaults.rnaseqStrandSpecificity(params)
 
         javaMem = javaMemoryOptions(task).jvmOpts
 
@@ -501,14 +501,14 @@ process sampleInsertSizeMetrics
 
     publishDir params.sampleBamDir, mode: "link"
 
-    when:
-        params.insertSizeMetrics
-
     input:
         record(sampleName: String, bam: Path, referenceFasta: Path)
 
     output:
-        path metrics, optional: true
+        file(metrics, optional: true)
+
+    when:
+        params.insertSizeMetrics
 
     shell:
         inBam = bam

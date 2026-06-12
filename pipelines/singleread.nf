@@ -31,9 +31,9 @@ workflow singleRead
         chunkCountChannel
 
     main:
-        referenceFastaValue   = channel.value(file(fastaReferencePath()))
-        genomeSizesValue      = channel.value(file(genomeSizesPath()))
-        referenceRefFlatValue = channel.value(file(referenceRefFlatPath()))
+        def referenceFasta   = file(fastaReferencePath())
+        def genomeSizes      = file(genomeSizesPath())
+        def referenceRefFlat = file(referenceRefFlatPath())
 
         // Add sequencing info back to the channel for read groups.
         // It is available from sequencingInfoChannel, the rows from the CSV file.
@@ -64,11 +64,11 @@ workflow singleRead
 
         mergeResult = picardMergeOrMarkDuplicates(mergeChannel)
 
-        picardWithRef = mergeResult.mergedBam.combine(referenceFasta: referenceFastaValue)
+        picardWithRef = mergeResult.mergedBam.map { r -> record(basename: r.basename, bam: r.bam, referenceFasta: referenceFasta) }
 
         picardAlignmentMetrics(picardWithRef)
         picardWGSMetrics(picardWithRef, true)
-        picardRnaSeqMetrics(picardWithRef.combine(referenceRefFlat: referenceRefFlatValue))
+        picardRnaSeqMetrics(picardWithRef.map { r -> record(basename: r.basename, bam: r.bam, referenceFasta: r.referenceFasta, referenceRefFlat: referenceRefFlat) })
 
         // Join the output of merge or mark duplicates with the sequencing info
         // by base name.
@@ -109,15 +109,15 @@ workflow singleRead
 
         sampleMergeResult = sampleMergeOrMarkDuplicates(sampleMergeChannel)
 
-        sampleWithRef = sampleMergeResult.sampleBam.combine(referenceFasta: referenceFastaValue)
+        sampleWithRef = sampleMergeResult.sampleBam.map { r -> record(sampleName: r.sampleName, bam: r.bam, referenceFasta: referenceFasta) }
 
         sampleAlignmentMetrics(sampleWithRef)
         sampleWGSMetrics(sampleWithRef, true)
-        sampleRnaSeqMetrics(sampleWithRef.combine(referenceRefFlat: referenceRefFlatValue))
+        sampleRnaSeqMetrics(sampleWithRef.map { r -> record(sampleName: r.sampleName, bam: r.bam, referenceFasta: r.referenceFasta, referenceRefFlat: referenceRefFlat) })
 
-        def covOut  = sampleGenomeCoverage(sampleMergeResult.sampleBam.combine(genomeSizes: genomeSizesValue))
-        def sortOut = sampleBedSort(covOut.combine(genomeSizes: genomeSizesValue))
-        sampleBedgraphToBigwig(sortOut.combine(genomeSizes: genomeSizesValue))
+        def covOut  = sampleGenomeCoverage(sampleMergeResult.sampleBam.map { r -> record(sampleName: r.sampleName, bam: r.bam, genomeSizes: genomeSizes) })
+        def sortOut = sampleBedSort(covOut.map { r -> record(sampleName: r.sampleName, bedgraph: r.bedgraph, genomeSizes: genomeSizes) })
+        sampleBedgraphToBigwig(sortOut.map { r -> record(sampleName: r.sampleName, sortedBed: r.sortedBed, genomeSizes: genomeSizes) })
 
     emit:
         bams        = mergeResult.mergedBam

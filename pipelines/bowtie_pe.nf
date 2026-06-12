@@ -15,9 +15,9 @@ workflow bowtiePE_wf
         csvChannel
 
     main:
-        bowtie2IndexFile = file(APDefaults.bowtie2IndexPath(params))
-        bowtie2IndexDirValue = channel.value(bowtie2IndexFile.parent)
-        bowtie2IndexPrefixValue = channel.value(bowtie2IndexFile.name)
+        def bowtie2IndexPath = Path.of(APDefaults.bowtie2IndexPath(params))
+        def bowtie2IndexDir = bowtie2IndexPath.parent
+        def bowtie2IndexPrefix = bowtie2IndexPath.fileName.toString()
 
         fastqChannel =
             csvChannel
@@ -75,8 +75,9 @@ workflow bowtiePE_wf
         combinedChunkChannel =
             perChunkChannel1
             .join(perChunkChannel2, by: ['basename', 'chunk'])
-            .combine(bowtie2IndexDir: bowtie2IndexDirValue, bowtie2IndexPrefix: bowtie2IndexPrefixValue)
+            .map { r -> record(basename: r.basename, chunk: r.chunk, read1: r.read1, read2: r.read2,
+                               bowtie2IndexDir: bowtie2IndexDir, bowtie2IndexPrefix: bowtie2IndexPrefix) }
 
         bowtiePE(combinedChunkChannel)
-        pairedEnd(bowtiePe.out, csvChannel, chunkCountChannel)
+        pairedEnd(bowtiePE.out, csvChannel, chunkCountChannel)
 }

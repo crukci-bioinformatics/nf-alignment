@@ -14,9 +14,9 @@ workflow bwaPE_wf
         csvChannel
 
     main:
-        bwaIndexFile = file(APDefaults.bwaIndexPath(params))
-        bwaIndexDirValue = channel.value(bwaIndexFile.parent)
-        bwaIndexPrefixValue = channel.value(bwaIndexFile.name)
+        def bwaIndexPath = Path.of(APDefaults.bwaIndexPath(params))
+        def bwaIndexDir = bwaIndexPath.parent
+        def bwaIndexPrefix = bwaIndexPath.fileName.toString()
 
         fastqChannel =
             csvChannel
@@ -57,19 +57,19 @@ workflow bwaPE_wf
             splitFastq1.out
             .flatMap { r ->
                 r.fastqFiles.collect { f ->
-                    record(basename: r.basename, read: r.read, fastqFile: f)
+                    record(basename: r.basename, read: r.read, fastqFile: f,
+                           bwaIndexDir: bwaIndexDir, bwaIndexPrefix: bwaIndexPrefix)
                 }
             }
-            .combine(bwaIndexDir: bwaIndexDirValue, bwaIndexPrefix: bwaIndexPrefixValue)
 
         read2PerChunkChannel =
             splitFastq2.out
             .flatMap { r ->
                 r.fastqFiles.collect { f ->
-                    record(basename: r.basename, read: r.read, fastqFile: f)
+                    record(basename: r.basename, read: r.read, fastqFile: f,
+                           bwaIndexDir: bwaIndexDir, bwaIndexPrefix: bwaIndexPrefix)
                 }
             }
-            .combine(bwaIndexDir: bwaIndexDirValue, bwaIndexPrefix: bwaIndexPrefixValue)
 
         // Align the chunks in independent channels.
 
@@ -92,8 +92,11 @@ workflow bwaPE_wf
                 failOnDuplicate: true,
                 failOnMismatch: true
             )
-            .combine(bwaIndexDir: bwaIndexDirValue, bwaIndexPrefix: bwaIndexPrefixValue)
+            .map { r -> record(basename: r.basename, chunk: r.chunk,
+                               saiFile1: r.saiFile1, fastqFile1: r.fastqFile1,
+                               saiFile2: r.saiFile2, fastqFile2: r.fastqFile2,
+                               bwaIndexDir: bwaIndexDir, bwaIndexPrefix: bwaIndexPrefix) }
 
-        bwaSampe(sampeChannel)
-        pairedend(bwaSampe.out, csvChannel, chunkCountChannel)
+        bwaSamPE(sampeChannel)
+        pairedEnd(bwaSamPE.out, csvChannel, chunkCountChannel)
 }

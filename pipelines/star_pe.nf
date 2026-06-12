@@ -14,7 +14,7 @@ workflow starPE_wf
         csvChannel
 
     main:
-        starIndexValue = channel.value(file(APDefaults.starIndexPath(params)))
+        def starIndex = file(APDefaults.starIndexPath(params))
 
         fastqChannel =
             csvChannel
@@ -72,9 +72,8 @@ workflow starPE_wf
         combinedChunkChannel =
             perChunkChannel1
             .join(perChunkChannel2, by: ['basename', 'chunk'])
-            .map { r -> record(basename: r.basename, chunk: r.chunk, sequenceFiles: [r.read1, r.read2]) }
-            .combine(starIndex: starIndexValue)
+            .map { r -> record(basename: r.basename, chunk: r.chunk, sequenceFiles: [r.read1, r.read2], starIndex: starIndex) }
 
         STAR(combinedChunkChannel)
-        pairedend(STAR.out, csvChannel, chunkCountChannel)
+        pairedEnd(STAR.out, csvChannel, chunkCountChannel)
 }

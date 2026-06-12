@@ -15,9 +15,9 @@ workflow bowtieSE_wf
         csvChannel
 
     main:
-        bowtie2IndexFile = file(APDefaults.bowtie2IndexPath(params))
-        bowtie2IndexDirValue = channel.value(bowtie2IndexFile.parent)
-        bowtie2IndexPrefixValue = channel.value(bowtie2IndexFile.name)
+        def bowtie2IndexPath = Path.of(APDefaults.bowtie2IndexPath(params))
+        def bowtie2IndexDir = bowtie2IndexPath.parent
+        def bowtie2IndexPrefix = bowtie2IndexPath.fileName.toString()
 
         fastqChannel =
             csvChannel
@@ -47,11 +47,11 @@ workflow bowtieSE_wf
             splitFastq.out
             .flatMap { r ->
                 r.fastqFiles.collect { f ->
-                    record(basename: r.basename, chunk: extractChunkNumber(f), read1: f)
+                    record(basename: r.basename, chunk: extractChunkNumber(f), read1: f,
+                           bowtie2IndexDir: bowtie2IndexDir, bowtie2IndexPrefix: bowtie2IndexPrefix)
                 }
             }
-            .combine(bowtie2IndexDir: bowtie2IndexDirValue, bowtie2IndexPrefix: bowtie2IndexPrefixValue)
 
-        bowtieSe(perChunkChannel)
-        singleread(bowtieSe.out, csvChannel, chunkCountChannel)
+        bowtieSE(perChunkChannel)
+        singleRead(bowtieSE.out, csvChannel, chunkCountChannel)
 }

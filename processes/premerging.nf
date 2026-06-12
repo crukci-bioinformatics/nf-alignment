@@ -14,14 +14,14 @@ process makeSafeForMerging
     memory 1.MB
     time   1.minute
 
-    when:
-        params.mergeSamples
-
     input:
         record(basename: String, bam: Path, sequencingInfo: Map)
 
     output:
         record(basename: basename, bam: file(outBam), sequencingInfo: sequencingInfo)
+
+    when:
+        params.mergeSamples
 
     shell:
         inBam = bam

@@ -15,9 +15,9 @@ workflow bwamemPE_wf
         csvChannel
 
     main:
-        bwamem2IndexFile = file(APDefaults.bwamem2IndexPath(params))
-        bwamem2IndexDirValue = channel.value(bwamem2IndexFile.parent)
-        bwamem2IndexPrefixValue = channel.value(bwamem2IndexFile.name)
+        def bwamem2IndexPath = Path.of(APDefaults.bwamem2IndexPath(params))
+        def bwamem2IndexDir = bwamem2IndexPath.parent
+        def bwamem2IndexPrefix = bwamem2IndexPath.fileName.toString()
 
         fastqChannel =
             csvChannel
@@ -75,9 +75,9 @@ workflow bwamemPE_wf
         combinedChunkChannel =
             perChunkChannel1
             .join(perChunkChannel2, by: ['basename', 'chunk'])
-            .map { r -> record(basename: r.basename, chunk: r.chunk, sequenceFiles: [r.read1, r.read2]) }
-            .combine(bwamem2IndexDir: bwamem2IndexDirValue, bwamem2IndexPrefix: bwamem2IndexPrefixValue)
+            .map { r -> record(basename: r.basename, chunk: r.chunk, sequenceFiles: [r.read1, r.read2],
+                               bwamem2IndexDir: bwamem2IndexDir, bwamem2IndexPrefix: bwamem2IndexPrefix) }
 
         bwaMem(combinedChunkChannel)
-        pairedend(bwaMem.out, csvChannel, chunkCountChannel)
+        pairedEnd(bwaMem.out, csvChannel, chunkCountChannel)
 }

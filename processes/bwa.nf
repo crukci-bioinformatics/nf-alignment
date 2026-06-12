@@ -1,7 +1,7 @@
 /*
  * Processes for running classic BWA.
  *
- * BlankSeparatedList is accessed via NfUtils.blankSepList() in lib/NfUtils.groovy
+ * BlankSeparatedList is accessed via APUtils.blankSepList() in lib/APUtils.groovy
  * because import declarations are not permitted in strict-parser Nextflow scripts.
  */
 
@@ -71,8 +71,8 @@ process bwaSamPE
         // TODO: Check this. This is Claude's idea.
         // Lists need to explicitly be BlankSeparatedLists to render correctly
         // in the expansion of the bwasampe template. Regular lists add square brackets.
-        saiFiles   = NfUtils.blankSepList(saiFile1, saiFile2)
-        fastqFiles = NfUtils.blankSepList(fastqFile1, fastqFile2)
+        saiFiles   = APUtils.blankSepList(saiFile1, saiFile2)
+        fastqFiles = APUtils.blankSepList(fastqFile1, fastqFile2)
         outBam = "${basename}.bwa.${chunk}.bam"
         template "bwa/bwasampe.sh"
 }
