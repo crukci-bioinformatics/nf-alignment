@@ -9,7 +9,7 @@
 
 nextflow.enable.types = true
 
-include { javaMemoryOptions; sizeOf; safeName } from "plugin/nf-crukci-support"
+include { javaMemoryOptions; safeName } from "plugin/nf-crukci-support"
 include { alignedFileName } from '../components/functions'
 
 /*
@@ -383,16 +383,8 @@ process sampleMergeOrMarkDuplicates
         }
         else
         {
-            if (sizeOf(inBams) == 1)
-            {
-                // When "inBams" is exactly one, there is no need to run the single file
-                // through merge. It can just be linked to.
-                "ln -s ${inBams} \"${outBam}\""
-            }
-            else
-            {
-                template "picard/MergeSamFiles.sh"
-            }
+            // Even if there is only one file, run in through MergeSamFiles to create the index.
+            template "picard/MergeSamFiles.sh"
         }
 }
 
